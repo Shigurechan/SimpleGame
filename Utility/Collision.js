@@ -29,6 +29,25 @@ class Collision
             return n;
       }
 
+
+
+      //線分と線分の交点取得　LineSegment型
+      static LineSegment_Pos(a,b)
+      {
+            let aa = abs(this.cross(VectorSub(b.end,b.start),VectorSub(a.start, b.start)));
+            let bb = abs(this.cross(VectorSub(b.end,b.start),VectorSub(a.end,b.start)));
+
+            let t = aa / (aa + bb);
+
+            let tt = new Vector(0,0);
+            tt.x = a.start.x + VectorSub(a.end,a.start).x * t;
+            tt.y = a.start.y + VectorSub(a.end,a.start).y * t;
+
+            return tt;            
+      }
+
+
+
       //線分と線分の当たり判定　LineSegment型
       static LineSegment(a,b)
       {
