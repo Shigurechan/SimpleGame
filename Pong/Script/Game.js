@@ -41,20 +41,29 @@ class Ball
             let Right_Wall = new LineSegment(new Vector(CANVAS_WIDTH - SCORE_WALL_LINE_INTERVAL,0),new Vector(CANVAS_WIDTH - SCORE_WALL_LINE_INTERVAL,CANVAS_HEIGHT));
             let Left_Wall = new LineSegment(new Vector(SCORE_WALL_LINE_INTERVAL,0),new Vector(SCORE_WALL_LINE_INTERVAL,CANVAS_HEIGHT));
 
-            let b = new Vector(this.position.x + this.vector.x * 1,this.position.y + this.vector.y * 1); 
+            let b = new Vector(this.position.x + this.vector.x * 10,this.position.y + this.vector.y * 10); 
             let p = new LineSegment(this.position,b);
 
+            line(Right_Wall.start.x,Right_Wall.start.y,Right_Wall.end.x,Right_Wall.end.y);
+            line(p.start.x,p.start.y,p.end.x,p.end.y);
+
+
+            console.log(Collision.LineSegment(Right_Wall,p));
 
             //得点加算
             if( (Collision.LineSegment(Right_Wall,p) == true) && (this.wallHit == false) )
             {
+                  console.log("Right Hit ");
                   this.wallHit = true;
                   this.hit = Hit.Right;
                   this.score.ScoreJudgement(this.hit);
 
             }
-            else if ( (Collision.LineSegment(Left_Wall,p) == true) && (this.wallHit == false) )
+            
+            if ( (Collision.LineSegment(Left_Wall,p) == true) && (this.wallHit == false) )
             {
+                  console.log("Left Hit ");
+
                   this.wallHit = true;
 
                   this.hit = Hit.Left;
@@ -319,6 +328,7 @@ class Score
             }
             else if(this.side == Hit.Right)
             {
+                  console.log("あああ");
                   if(this.winView < SCORE_JUDGEMENT_INTERVAL_TIME )
                   {      
                         textSize(35);
