@@ -10,6 +10,10 @@ const STAGE_HEIGHT = 10;
 const PIECE_WIDTH = 80;
 const PIECE_HEIGHT = 80;
 
+//当たり判定の大きさクリックとマス目
+const PIECE_COLLISION_RANGE = 40;
+const MOUSE_COLLISION_RANGE = 10;
+
 
 class Stage
 {
@@ -29,24 +33,562 @@ class Stage
                   [0,0,0,0,0,0,0,0,0,0],
                   [0,0,0,0,0,0,0,0,0,0],
             ];
-      }
+      }    
 
-      //ひっくり返す
-      Reverse(pos)
+      // ################################ 反転 ################################ 
+      Reverse(piece,pos)
       {
-            if(stage[pos.y][pos.x] == BlackOrWhite.Black)
+            let put = false;
+            let rev;
+            if(piece == BlackOrWhite.White)
             {
-                  stage[pos.y][pos.x] = BlackOrWhite.White;
+                  rev = BlackOrWhite.Black;
             }
-            else if (stage[pos.y][pos.x] == BlackOrWhite.White)
+            else if(piece == BlackOrWhite.Black)
             {
-                  stage[pos.y][pos.x] = BlackOrWhite.Black;
+                  rev = BlackOrWhite.White;
+            }
+
+            let array = [];
+      
+            for(let yy = pos.y - 1; yy >= 0; yy--)
+            {
+                  if(this.stage[yy][pos.x] == rev)
+                  {
+                        array.push(new Vector(pos.x,yy));            
+                  }
+                  else if(this.stage[yy][pos.x] == piece)
+                  {
+                        break;
+                  }
+                  else if(this.stage[yy][pos.x] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }            　
+            }
+            
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+
+            array = [];
+                     
+            for(let yy = pos.y + 1; yy < STAGE_HEIGHT; yy++)
+            {
+                  if(this.stage[yy][pos.x] == rev)
+                  {
+                        array.push(new Vector(pos.x,yy));            
+                  }
+                  else if(this.stage[yy][pos.x] == piece)
+                  {
+                        put = true;
+                        break;
+                  }
+                  else if(this.stage[yy][pos.x] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }            　
+            }
+            
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+
+            array = [];
+                                          
+            for(let xx = pos.x + 1; xx <= STAGE_WIDTH; xx++)
+            {
+                  if(this.stage[pos.y][xx] == rev)
+                  {
+                        array.push(new Vector(xx,pos.y));            
+                  }
+                  else if(this.stage[pos.y][xx] == piece)
+                  {
+                        put = true;
+
+                        break;
+                  }
+                  else if(this.stage[pos.y][xx] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }            　
+            }
+            
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+
+            array = [];
+                                          
+            for(let xx = pos.x - 1; xx >= 0; xx--)
+            {
+                  if(this.stage[pos.y][xx] == rev)
+                  {
+                        array.push(new Vector(xx,pos.y));            
+                  }
+                  else if(this.stage[pos.y][xx] == piece)
+                  {
+
+                        break;
+                  }
+                  else if(this.stage[pos.y][xx] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }            　
+            }
+            
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+
+            array = [];
+
+            // ============================ 斜め
+            
+            let t = 0;
+            
+            let xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
+            let yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
+            if( (xx - 1) > (yy - 1) )
+            {
+                  t = yy - 1;
+            }
+            else
+            {
+                  t = xx - 1;
+            }
+
+            for(let i = 1; i < t; i++)
+            {
+                  if(this.stage[pos.y + i][pos.x + i] == rev)
+                  {
+                        array.push(new Vector(pos.x + i,pos.y + i));            
+                  }
+                  else if(this.stage[pos.y + i][pos.x + i] == piece)
+                  {
+
+                        break;
+                  }
+                  else if(this.stage[pos.y + i][pos.x + i] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }
+            }
+
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+
+            array = [];
+
+            xx = (STAGE_WIDTH - pos.x)
+            yy = (STAGE_HEIGHT - pos.y)
+
+            if( (xx - 1) > (yy - 1) )
+            {
+                  t = yy - 1;
+            }
+            else
+            {
+                  t = xx - 1;
+            }
+
+            for(let i = 1; i < t; i++ )
+            {
+                  if(this.stage[pos.y + i][pos.x - i] == rev)
+                  {
+                        array.push(new Vector(pos.x - i,pos.y + i));            
+                  }
+                  else if(this.stage[pos.y + i][pos.x - i] == piece)
+                  {
+                        break;
+                  }
+                  else if(this.stage[pos.y + i][pos.x - i] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }
+            }
+
+
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+            array = [];
+
+
+            
+            xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
+            yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
+            if( (xx - 1) > (yy - 1) )
+            {
+                  t = yy - 1;
+            }
+            else
+            {
+                  t = xx - 1;
+            }
+            
+            for(let i = 1; i < t; i++ )
+            {
+                  if(this.stage[pos.y - i][pos.x - i] == rev)
+                  {
+                        array.push(new Vector(pos.x - i,pos.y + i));            
+                  }
+                  else if(this.stage[pos.y - i][pos.x - i] == piece)
+                  {
+                        break;
+                  }
+                  else if(this.stage[pos.y - i][pos.x - i] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }
+            }
+
+
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                             
+
+            array = [];
+
+
+
+            xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
+            yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
+            if( (xx - 1) > (yy - 1) )
+            {
+                  t = yy - 1;
+            }
+            else
+            {
+                  t = xx - 1;
+            }
+            
+            for(let i = 1; i < t; i++ )
+            {
+                  if(this.stage[pos.y - i][pos.x + i] == rev)
+                  {
+                        array.push(new Vector(pos.x + i,pos.y + i));            
+                  }
+                  else if(this.stage[pos.y - i][pos.x + i] == piece)
+                  {
+                        break;
+                  }
+                  else if(this.stage[pos.y - i][pos.x + i] == BlackOrWhite.None)
+                  {
+                        array = [];
+                  }
+            }
+
+
+            //ひっくり返す
+            for(let i = 0; i < array.length; i++)
+            {
+                  put = true;
+                  this.stage[array[i].y][array[i].x] = piece;                                    
+            }                              
+
+      }
+
+
+      // ################################ 置ける場所 ################################ 
+      PutPiecePosition(piece,pos)
+      {
+            
+            let rev;
+            let putOK = 0;
+            if(piece == BlackOrWhite.White)
+            {
+                  rev = BlackOrWhite.Black;
+            }
+            else if(piece == BlackOrWhite.Black)
+            {
+                  rev = BlackOrWhite.White;
+            }
+            
+            if(this.stage[pos.y][pos.x] == BlackOrWhite.None)
+            {
+                  for(let yy = pos.y - 1; yy >= 0; yy--)
+                  {
+                        if(this.stage[yy][pos.x] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[yy][pos.x] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[yy][pos.x] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+                        }            　
+                  }
+
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+                  
+                  for(let yy = pos.y + 1; yy < STAGE_HEIGHT; yy++)
+                  {
+                        if(this.stage[yy][pos.x] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[yy][pos.x] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[yy][pos.x] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+                        }            　
+                  }
+                              
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+
+                  for(let xx = pos.x + 1; xx < STAGE_WIDTH; xx++)
+                  {
+                        if(this.stage[pos.y][xx] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[pos.y][xx] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[pos.y][xx] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+                        }            　
+                  }
+                  
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+                                                
+                  for(let xx = pos.x - 1; xx >= 0; xx--)
+                  {
+                        if(this.stage[pos.y][xx] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[pos.y][xx] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[pos.y][xx] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+                        }            　
+                  }
+
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+
+                  // ============================ 斜め  ============================ 
+                  
+                  let t = 0;
+                  putOK = 0;
+                  let xx = (STAGE_WIDTH - pos.x)
+                  let yy = (STAGE_HEIGHT - pos.y)
+                  if( (xx - 1) > (yy - 1) )
+                  {
+                        t = yy - 1;
+                  }
+                  else
+                  {
+                        t = xx - 1;
+                  }
+                  for(let i = 1; i < t; i++)
+                  {
+                        if(this.stage[pos.y + i][pos.x + i] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[pos.y + i][pos.x + i] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[pos.y + i][pos.x + i] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+
+                        }
+                  }
+
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+
+                  xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x);
+                  yy = (STAGE_HEIGHT - pos.y);
+
+                  if( (xx - 1) > (yy - 1) )
+                  {
+                        t = yy - 1;
+                  }
+                  else
+                  {
+                        t = xx - 1;
+                  }
+
+                  for(let i = 1; i < t; i++ )
+                  {
+                        if(this.stage[pos.y + i][pos.x - i] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[pos.y + i][pos.x - i] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[pos.y + i][pos.x - i] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+
+                        }
+                  }
+
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+
+                  xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
+                  yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
+                  if( (xx - 1) > (yy - 1) )
+                  {
+                        t = yy - 1;
+                  }
+                  else
+                  {
+                        t = xx - 1;
+                  }
+                  
+                  for(let i = 1; i < t; i++ )
+                  {
+                        if(this.stage[pos.y - i][pos.x - i] == rev)
+                        {
+                              putOK++;
+                        }
+                        else if(this.stage[pos.y - i][pos.x - i] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[pos.y - i][pos.x - i] == BlackOrWhite.None)
+                        {
+                              putOK = 0;
+                              break;
+
+                        }
+                  }
+
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }
+
+                  putOK = 0;
+                  xx = (STAGE_WIDTH - pos.x )
+                  yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
+                  if( (xx - 1) > (yy - 1) )
+                  {
+                        t = yy - 1;
+                  }
+                  else
+                  {
+                        t = xx - 1;
+                  }
+                  
+                  for(let i = 1; i < t; i++ )
+                  {
+                        if(this.stage[pos.y - i][pos.x + i] == rev)
+                        {
+                              putOK++;                                          
+                        }
+                        else if(this.stage[pos.y - i][pos.x + i] == piece)
+                        {
+                              break;
+                        }
+                        else if(this.stage[pos.y - i][pos.x + i] == BlackOrWhite.None)
+                        {
+                              putOK = 0;                                          
+                              break;
+
+
+                        }
+                  }
+
+                  if(putOK > 0)
+                  {
+                        return true;
+                  }            
+
+                  return false;
+            }
+            else
+            {
+                  return false;
             }
 
       }
 
 
-      
+
 
       //ひっくり返すか判定
       InversionJudgment()
@@ -58,67 +600,15 @@ class Stage
                         //黒に反転
                         if(this.stage[y][x] == BlackOrWhite.Black)
                         {
-                              let array = [];
-      
-                              for(let yy = y - 1; yy >= 0; yy--)
-                              {
-                                    if(this.stage[yy][x] == BlackOrWhite.White)
-                                    {
-                                          array.push(new Vector(x,yy));            
-                                    }
-                                    else if(this.stage[yy][x] == BlackOrWhite.Black)
-                                    {
-                                          break;
-                                    }
-                                    else if(this.stage[yy][x] == BlackOrWhite.None)
-                                    {
-                                          array = [];
-                                    }            
-                              }
-                              
-                              //ひっくり返す
-                              for(let i = 0; i < array.length; i++)
-                              {
-                                    this.stage[array[i].y][array[i].x] = BlackOrWhite.Black;                                    
-                              }                              
+                              let t = this.Reverse(BlackOrWhite.Black,new Vector(x,y));
                         }
-
                         //白に反転
                         else if (this.stage[y][x] == BlackOrWhite.White)
                         {
-                              let array = [];
-      
-                              for(let yy = y - 1; yy >= 0; yy--)
-                              {
-                                    if(this.stage[yy][x] == BlackOrWhite.Black)
-                                    {
-
-                                          array.push(new Vector(x,yy));            
-                                    }
-                                    else if(this.stage[yy][x] == BlackOrWhite.White)
-                                    {
-                                          break;
-                                    }
-                                    else if(this.stage[yy][x] == BlackOrWhite.None)
-                                    {
-                                          array = [];
-                                    }            
-                              }
-                              
-                              //ひっくり返す
-                              for(let i = 0; i < array.length; i++)
-                              {
-                                    console.log("ああああ");
-                                    this.stage[array[i].y][array[i].x] = BlackOrWhite.White;                                    
-                              }                              
-
-
-
+                              let t = this.Reverse(BlackOrWhite.White,new Vector(x,y));
                         }
-                                    
                   }
             }
-
       }
 
 
@@ -128,7 +618,6 @@ class Stage
       {     
             
             this.stage[pos.y][pos.x] = bw;
-            this.InversionJudgment();
       }
 
       Update()
@@ -166,7 +655,7 @@ class Stage
                         }
                         else
                         {
-                              console.log("その他");
+                   //           console.log("その他");
                         }            
                   }
             }
@@ -183,6 +672,26 @@ class Stage
 
 
 }
+
+
+class Enemy
+{
+      constructor(b)
+      {
+            this.bw = b;
+
+      }
+
+
+      StageCollision(stage)
+      {
+            
+      }
+
+
+
+}
+
 
 class Player
 {
@@ -203,7 +712,7 @@ class Player
 
             if(mouseIsPressed) 
             {
-                  if (mouseButton == LEFT) 
+                  if (mouseButton == LEFT　&& this.click == false) 
                   {
                         this.click = true;
                   }
@@ -217,23 +726,34 @@ class Player
       {
             this.Mouse();
       }
-
-
+    
+      // ################################ ステージとの当たり判定 ################################ 
       StageCollision(stage)
       {
 
-            const PIECE_COLLISION_RANGE = 40;
-            const MOUSE_COLLISION_RANGE = 10;
+            let putArray = [];
+            //this.PutPiecePosition(putArray,stage);
+
 
             //デバッグ
             for(let y = 0; y < STAGE_HEIGHT;  y++)
             {
                   for(let x = 0; x < STAGE_WIDTH; x++)
                   {
+                        if(stage.PutPiecePosition(this.bw,new Vector(x,y)) == true)
+                        {
+                              fill(color(0,255,0));   
+                              circle((x * PIECE_WIDTH) + (PIECE_WIDTH / 2),(y * PIECE_HEIGHT) + (PIECE_HEIGHT / 2),PIECE_COLLISION_RANGE);
+                        }
+                  
                         //fill(color(0,255,0));   
                         //circle((x * PIECE_WIDTH) + (PIECE_WIDTH / 2),(y * PIECE_HEIGHT) + (PIECE_HEIGHT / 2),PIECE_COLLISION_RANGE);
                   }
             }
+
+            
+            
+
 
 
 //            fill(color(255,0,0));
@@ -248,15 +768,30 @@ class Player
                         for(let x = 0; x < STAGE_WIDTH; x++)
                         {
             
-                              if(Collision.Circle(new Vector(x * PIECE_WIDTH + (PIECE_WIDTH / 2), y * PIECE_HEIGHT +  (PIECE_HEIGHT / 2)),PIECE_COLLISION_RANGE,this.position,MOUSE_COLLISION_RANGE) == true)
+                              if(Collision.Circle(new Vector(x * PIECE_WIDTH + (PIECE_WIDTH / 2), y * PIECE_HEIGHT +  (PIECE_HEIGHT / 2)),PIECE_COLLISION_RANGE,this.position,MOUSE_COLLISION_RANGE) == true
+                              && stage.PutPiecePosition(this.bw,new Vector(x,y)) )
                               {
                                     stage.Put(new Vector(x,y),this.bw);
                               }
                         }
-
-                  }
-                  
+                  }           
             }
+      }
+}
+
+
+
+class Enemy
+{
+      constructor(b)
+      {
+            this.bw = b;            
+      }
+
+
+      StageCollision()
+      {
+
       }
 
 }
@@ -274,6 +809,7 @@ class Game
       {
             this.player.Update();
             this.player.StageCollision(this.stage);
+
             
       }
 
