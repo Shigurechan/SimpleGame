@@ -64,31 +64,32 @@ class Stage
       // ################################ 空の場所に置けるかどうか？ ################################ 
       LineReversePosition(piece,position,out_array,vector)
       {
-            function stageNum(vector,position)
+            //ステージの端までの数
+            function stageNum(vec,pos)
             {
                   let x = 0;
                   let y = 0;
-                  if(vector.x != 0)
+                  if(vec.x != 0)
                   {
-                        if(vector.x > 0)
+                        if(vec.x > 0)
                         {
-                              x = STAGE_WIDTH -  position.x;
+                              x = STAGE_WIDTH -  pos.x;
                         }
-                        else if(vector.x < 0)
+                        else if(vec.x < 0)
                         {
-                              x = STAGE_WIDTH - (STAGE_WIDTH -  position.x);
+                              x = STAGE_WIDTH - (STAGE_WIDTH -  pos.x);
                         }
                   }
                   
-                  if(vector.y != 0)
+                  if(vec.y != 0)
                   {
-                        if(vector.y > 0)
+                        if(vec.y > 0)
                         {
-                              y = STAGE_HEIGHT -  position.y;
+                              y = STAGE_HEIGHT -  pos.y;
                         }
-                        else if(vector.y < 0)
+                        else if(vec.y < 0)
                         {
-                              y = STAGE_HEIGHT - (STAGE_HEIGHT -  position.y);
+                              y = STAGE_HEIGHT - (STAGE_HEIGHT -  pos.y);
                         }
                   }
 
@@ -115,34 +116,26 @@ class Stage
                         t = move.x;
                   }
 
-                 // console.log(t);
-                  let b = false;
+                 
                   for(let i = 1; i < t; i++)
                   {
 
-                        if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == revPiece)
+                        if(this.stage[position.y + (i * vector.y )][position.x  + (i * vector.x )] == revPiece)
                         {
-                              array.push(new Vector(position.x + (i * vector.x ),+ (i * vector.y )));
-            //                  console.log("array.length: ",array.length);
+                              array.push(new Vector(position.x + (i * vector.x ),position.y + (i * vector.y )));
                         }
-                        else if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == piece)
+                        else if(this.stage[position.y + (i * vector.y )][position.x  + (i * vector.x )] == piece)
                         {
-                              b = true;
-                              break;
-                        }else
-                        {
-                              if(array.length == 1)
-                              {
-                                    array = [];
-                              }
                               break;
                         }
-                        
-                        
-                        if( (array.length == 1) && (b == false) )
+                        else
                         {
                               array = [];
+                              break;
+
                         }
+                        
+                      
 
                   }
 
@@ -150,10 +143,8 @@ class Stage
             else if( (vector.x == 0) || (vector.y == 0) ) 
             {
                   let t = 0;
-                  let b = false;
-      
                   
-
+      
                   move = stageNum(vector,position);
 
                   if(vector.x != 0)
@@ -168,53 +159,69 @@ class Stage
 
                   for(let i = 1; i < t; i++)
                   {
-                        if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == revPiece)
+                        if(this.stage[position.y + (i * vector.y )][position.x  + (i * vector.x )] == revPiece)
                         {
                               array.push(new Vector(position.x + (i * vector.x ),position.y + (i * vector.y )) );
                         }
-                        else if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == piece)
+                        else if(this.stage[position.y + (i * vector.y )][position.x  + (i * vector.x )] == piece)
                         {
-                              b = true;
                               break;
                         }else
                         {
-                              if(array.length == 1)
-                              {
-                                    array = [];
-                              }
+                              array = [];
                               break;
                         }      
                   }
                         
-                  if( (array.length == 1) && (b == false) )
-                  {
-                        array = [];
-                  }
-
+                
+            }
+            else
+            {
+                  out_array = [0];
+                  return out_array;
             }
             
-
-
-            for(let i = 0; i < array.length; i++)
+            if(array.length > 0)
             {
-                  //console.log("あああ");
-                  out_array.push(array[i]);
+                  for(let i = 0; i < array.length; i++)
+                  {
+                        out_array.push(array[i]);
+                  }
+                  
+                  return out_array;
             }
 
-            //console.log(out_array.lenght);
+            out_array = [0];
+            return out_array;
+
       }
 
       // ################################ 反転 ################################ 
       Reverse(piece)
       {
-            let array = new Array();
             for(let y = 0; y < STAGE_HEIGHT; y++)
             {
                   for(let x = 0; x < STAGE_WIDTH; x++)
                   {
                         if (this.stage[y][x] == piece)
                         {
+                              
 
+                              for(let yy = -1; yy < 2; yy++)
+                              {
+                                    for(let xx = -1; xx < 2; xx++)
+                                    {
+                                          let array = [];
+                                          this.LineReversePosition(piece,new Vector(x,y),array,new Vector(xx,yy));
+                                          if(array.length > 0)
+                                          {
+                                                for(let t = 0; t < array.length; t++)
+                                                {
+                                                      this.stage[array[t].y][array[t].x] = piece;
+                                                }
+                                          }
+                                    }
+                              }
                         }
                   }            
             }
@@ -228,61 +235,60 @@ class Stage
             this.LineReversePosition(piece,position,arr,new Vector(1,0));
             if(arr.length > 0)
             {
-                  return true;
+                  return 1;
             }
 
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(-1,0));
             if(arr.length > 0)
             {
-                  return true;
+                  return 2;
             }
             
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(0,1));
             if(arr.length > 0)
             {
-                  return true;
+                  return 3;
             }
             
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(0,-1));
             if(arr.length > 0)
             {
-                  return true;
+                  return 4;
             }
             
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(1,1));
             if(arr.length > 0)
             {
-                  return true;
+                  return 5;
             }
             
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(-1,1));
             if(arr.length > 0)
             {
-                  return true;
+                  return 6;
             }
             
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(1,-1));
-            if(arr.lenght > 0)
+            if(arr.length > 0)
             {
-                  return true;
+                  return 7;
             }
             
-
             arr = [];
             this.LineReversePosition(piece,position,arr,new Vector(-1,-1));
             if(arr.length > 0)
             {
-                  return true;
+                  return 8;
             }
             
 
-            return false;
+            return 0;
       }
 
 
@@ -318,7 +324,7 @@ class Stage
             for(let i = 0; i < STAGE_HEIGHT; i++)
             {
                   line(0,i * PIECE_HEIGHT , (CANVAS_WIDTH - (CANVAS_WIDTH - (PIECE_WIDTH * STAGE_WIDTH))),i * PIECE_HEIGHT);        //X
-                  line((i + 1) * PIECE_WIDTH,0,(i +1) * PIECE_HEIGHT, (CANVAS_HEIGHT - (CANVAS_HEIGHT - (PIECE_HEIGHT * STAGE_HEIGHT))));     //Y
+                  line((i + 1) * PIECE_WIDTH,0,(i + 1) * PIECE_HEIGHT, (CANVAS_HEIGHT - (CANVAS_HEIGHT - (PIECE_HEIGHT * STAGE_HEIGHT))));     //Y
             }
 
       }
@@ -420,37 +426,23 @@ class Player
       StageCollision(stage)
       {
 
-            let putArray = [];
-            let outPutPosition = [];
-            let outReversePosition = [];
-
-
-            //console.log(outPutPosition[0].putPosition.x + " , " + outPutPosition[0].putPosition.y);
-
-            //デバッグ
+            //置ける場所
             for(let y = 0; y < STAGE_HEIGHT;  y++)
             {
                   for(let x = 0; x < STAGE_WIDTH;  x++)
                   {
                         
-                        if( (stage.PutPosition(new Vector(x,y),this.bw) == true) && (stage.stage[y][x] == BlackOrWhite.None) )
+                        if( (stage.PutPosition(new Vector(x,y),this.bw) != 0) && (stage.stage[y][x] == BlackOrWhite.None) )
                         {
-                         //     console.log(" デバッグ");
+                              //console.log(stage.PutPosition(new Vector(x,y),this.bw));
                               fill(color(0,255,0));   
                               circle((x * PIECE_WIDTH) + (PIECE_WIDTH / 2),(y * PIECE_HEIGHT) + (PIECE_HEIGHT / 2),PIECE_COLLISION_RANGE);
                         }
                   }
             }
             
-            
 
-
-
-//            fill(color(255,0,0));
-//           circle(this.position.x,this.position.y,MOUSE_COLLISION_RANGE);
-
-
-                  
+            //クリックで配置            
             if(this.click == true)
             {
                   for(let y = 0; y < STAGE_HEIGHT;  y++)
@@ -458,14 +450,17 @@ class Player
                         for(let x = 0; x < STAGE_WIDTH; x++)
                         {
             
-                              if(Collision.Circle(new Vector(x * PIECE_WIDTH + (PIECE_WIDTH / 2), y * PIECE_HEIGHT +  (PIECE_HEIGHT / 2)),PIECE_COLLISION_RANGE,this.position,MOUSE_COLLISION_RANGE) == true
-                              && stage.PutPiecePosition(this.bw,new Vector(x,y)) )
+                              if( (Collision.Circle(new Vector(x * PIECE_WIDTH + (PIECE_WIDTH / 2), y * PIECE_HEIGHT +  (PIECE_HEIGHT / 2)),PIECE_COLLISION_RANGE,this.position,MOUSE_COLLISION_RANGE) == true)
+                              && (stage.PutPosition(new Vector(x,y),this.bw) != 0) && (stage.stage[y][x] == BlackOrWhite.None) )
                               {
                                     stage.Put(new Vector(x,y),this.bw);
                               }
                         }
                   }           
             }
+
+            stage.Reverse(this.bw);
+
       }
 }
 
