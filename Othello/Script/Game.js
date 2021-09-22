@@ -14,6 +14,32 @@ const PIECE_HEIGHT = 80;
 const PIECE_COLLISION_RANGE = 40;
 const MOUSE_COLLISION_RANGE = 10;
 
+//反転する座標とその数
+class ReversePosition
+{
+      //置く座標、反転枚数、反転座標
+      constructor(pos,num,rev)
+      {
+            this.num = num;
+            this.revercePosition = rev;
+            this.putPosition = pos;
+      }
+
+
+}
+
+function GetReversePiece(piece)
+{
+      if(piece == BlackOrWhite.White)
+      {
+            return BlackOrWhite.Black;
+      }
+      else if(piece == BlackOrWhite.Black)
+      {
+            return BlackOrWrite.White;
+      }
+}
+
 
 class Stage
 {
@@ -35,559 +61,229 @@ class Stage
             ];
       }    
 
-      // ################################ 反転 ################################ 
-      Reverse(piece,pos)
+      // ################################ 空の場所に置けるかどうか？ ################################ 
+      LineReversePosition(piece,position,out_array,vector)
       {
-            let put = false;
-            let rev;
-            if(piece == BlackOrWhite.White)
+            function stageNum(vector,position)
             {
-                  rev = BlackOrWhite.Black;
-            }
-            else if(piece == BlackOrWhite.Black)
-            {
-                  rev = BlackOrWhite.White;
+                  let x = 0;
+                  let y = 0;
+                  if(vector.x != 0)
+                  {
+                        if(vector.x > 0)
+                        {
+                              x = STAGE_WIDTH -  position.x;
+                        }
+                        else if(vector.x < 0)
+                        {
+                              x = STAGE_WIDTH - (STAGE_WIDTH -  position.x);
+                        }
+                  }
+                  
+                  if(vector.y != 0)
+                  {
+                        if(vector.y > 0)
+                        {
+                              y = STAGE_HEIGHT -  position.y;
+                        }
+                        else if(vector.y < 0)
+                        {
+                              y = STAGE_HEIGHT - (STAGE_HEIGHT -  position.y);
+                        }
+                  }
+
+                  return new Vector(x,y);
             }
 
-            let array = [];
       
-            for(let yy = pos.y - 1; yy >= 0; yy--)
+            let revPiece = GetReversePiece(piece);    //反対の色を取得
+            let array = [];                           //反転座標
+            let move;
+            let t;
+
+            if ( (vector.x != 0) && (vector.y != 0) )
             {
-                  if(this.stage[yy][pos.x] == rev)
+
+                  move = stageNum(vector,position);
+
+                  if(move.x > move.y)
                   {
-                        array.push(new Vector(pos.x,yy));            
-                  }
-                  else if(this.stage[yy][pos.x] == piece)
-                  {
-                        break;
-                  }
-                  else if(this.stage[yy][pos.x] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }            　
-            }
-            
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-
-            array = [];
-                     
-            for(let yy = pos.y + 1; yy < STAGE_HEIGHT; yy++)
-            {
-                  if(this.stage[yy][pos.x] == rev)
-                  {
-                        array.push(new Vector(pos.x,yy));            
-                  }
-                  else if(this.stage[yy][pos.x] == piece)
-                  {
-                        put = true;
-                        break;
-                  }
-                  else if(this.stage[yy][pos.x] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }            　
-            }
-            
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-
-            array = [];
-                                          
-            for(let xx = pos.x + 1; xx <= STAGE_WIDTH; xx++)
-            {
-                  if(this.stage[pos.y][xx] == rev)
-                  {
-                        array.push(new Vector(xx,pos.y));            
-                  }
-                  else if(this.stage[pos.y][xx] == piece)
-                  {
-                        put = true;
-
-                        break;
-                  }
-                  else if(this.stage[pos.y][xx] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }            　
-            }
-            
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-
-            array = [];
-                                          
-            for(let xx = pos.x - 1; xx >= 0; xx--)
-            {
-                  if(this.stage[pos.y][xx] == rev)
-                  {
-                        array.push(new Vector(xx,pos.y));            
-                  }
-                  else if(this.stage[pos.y][xx] == piece)
-                  {
-
-                        break;
-                  }
-                  else if(this.stage[pos.y][xx] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }            　
-            }
-            
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-
-            array = [];
-
-            // ============================ 斜め
-            
-            let t = 0;
-            
-            let xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
-            let yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
-            if( (xx - 1) > (yy - 1) )
-            {
-                  t = yy - 1;
-            }
-            else
-            {
-                  t = xx - 1;
-            }
-
-            for(let i = 1; i < t; i++)
-            {
-                  if(this.stage[pos.y + i][pos.x + i] == rev)
-                  {
-                        array.push(new Vector(pos.x + i,pos.y + i));            
-                  }
-                  else if(this.stage[pos.y + i][pos.x + i] == piece)
-                  {
-
-                        break;
-                  }
-                  else if(this.stage[pos.y + i][pos.x + i] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }
-            }
-
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-
-            array = [];
-
-            xx = (STAGE_WIDTH - pos.x)
-            yy = (STAGE_HEIGHT - pos.y)
-
-            if( (xx - 1) > (yy - 1) )
-            {
-                  t = yy - 1;
-            }
-            else
-            {
-                  t = xx - 1;
-            }
-
-            for(let i = 1; i < t; i++ )
-            {
-                  if(this.stage[pos.y + i][pos.x - i] == rev)
-                  {
-                        array.push(new Vector(pos.x - i,pos.y + i));            
-                  }
-                  else if(this.stage[pos.y + i][pos.x - i] == piece)
-                  {
-                        break;
-                  }
-                  else if(this.stage[pos.y + i][pos.x - i] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }
-            }
-
-
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-            array = [];
-
-
-            
-            xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
-            yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
-            if( (xx - 1) > (yy - 1) )
-            {
-                  t = yy - 1;
-            }
-            else
-            {
-                  t = xx - 1;
-            }
-            
-            for(let i = 1; i < t; i++ )
-            {
-                  if(this.stage[pos.y - i][pos.x - i] == rev)
-                  {
-                        array.push(new Vector(pos.x - i,pos.y + i));            
-                  }
-                  else if(this.stage[pos.y - i][pos.x - i] == piece)
-                  {
-                        break;
-                  }
-                  else if(this.stage[pos.y - i][pos.x - i] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }
-            }
-
-
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                             
-
-            array = [];
-
-
-
-            xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
-            yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
-            if( (xx - 1) > (yy - 1) )
-            {
-                  t = yy - 1;
-            }
-            else
-            {
-                  t = xx - 1;
-            }
-            
-            for(let i = 1; i < t; i++ )
-            {
-                  if(this.stage[pos.y - i][pos.x + i] == rev)
-                  {
-                        array.push(new Vector(pos.x + i,pos.y + i));            
-                  }
-                  else if(this.stage[pos.y - i][pos.x + i] == piece)
-                  {
-                        break;
-                  }
-                  else if(this.stage[pos.y - i][pos.x + i] == BlackOrWhite.None)
-                  {
-                        array = [];
-                  }
-            }
-
-
-            //ひっくり返す
-            for(let i = 0; i < array.length; i++)
-            {
-                  put = true;
-                  this.stage[array[i].y][array[i].x] = piece;                                    
-            }                              
-
-      }
-
-
-      // ################################ 置ける場所 ################################ 
-      PutPiecePosition(piece,pos)
-      {
-            
-            let rev;
-            let putOK = 0;
-            if(piece == BlackOrWhite.White)
-            {
-                  rev = BlackOrWhite.Black;
-            }
-            else if(piece == BlackOrWhite.Black)
-            {
-                  rev = BlackOrWhite.White;
-            }
-            
-            if(this.stage[pos.y][pos.x] == BlackOrWhite.None)
-            {
-                  for(let yy = pos.y - 1; yy >= 0; yy--)
-                  {
-                        if(this.stage[yy][pos.x] == rev)
-                        {
-                              putOK++;
-                        }
-                        else if(this.stage[yy][pos.x] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[yy][pos.x] == BlackOrWhite.None)
-                        {
-                              putOK = 0;
-                              break;
-                        }            　
-                  }
-
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-                  
-                  for(let yy = pos.y + 1; yy < STAGE_HEIGHT; yy++)
-                  {
-                        if(this.stage[yy][pos.x] == rev)
-                        {
-                              putOK++;
-                        }
-                        else if(this.stage[yy][pos.x] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[yy][pos.x] == BlackOrWhite.None)
-                        {
-                              putOK = 0;
-                              break;
-                        }            　
-                  }
-                              
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-
-                  for(let xx = pos.x + 1; xx < STAGE_WIDTH; xx++)
-                  {
-                        if(this.stage[pos.y][xx] == rev)
-                        {
-                              putOK++;
-                        }
-                        else if(this.stage[pos.y][xx] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[pos.y][xx] == BlackOrWhite.None)
-                        {
-                              putOK = 0;
-                              break;
-                        }            　
-                  }
-                  
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-                                                
-                  for(let xx = pos.x - 1; xx >= 0; xx--)
-                  {
-                        if(this.stage[pos.y][xx] == rev)
-                        {
-                              putOK++;
-                        }
-                        else if(this.stage[pos.y][xx] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[pos.y][xx] == BlackOrWhite.None)
-                        {
-                              putOK = 0;
-                              break;
-                        }            　
-                  }
-
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-
-                  // ============================ 斜め  ============================ 
-                  
-                  let t = 0;
-                  putOK = 0;
-                  let xx = (STAGE_WIDTH - pos.x)
-                  let yy = (STAGE_HEIGHT - pos.y)
-                  if( (xx - 1) > (yy - 1) )
-                  {
-                        t = yy - 1;
+                        t = move.y;
                   }
                   else
                   {
-                        t = xx - 1;
+                        t = move.x;
                   }
+
+                 // console.log(t);
+                  let b = false;
                   for(let i = 1; i < t; i++)
                   {
-                        if(this.stage[pos.y + i][pos.x + i] == rev)
+
+                        if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == revPiece)
                         {
-                              putOK++;
+                              array.push(new Vector(position.x + (i * vector.x ),+ (i * vector.y )));
+            //                  console.log("array.length: ",array.length);
                         }
-                        else if(this.stage[pos.y + i][pos.x + i] == piece)
+                        else if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == piece)
                         {
+                              b = true;
+                              break;
+                        }else
+                        {
+                              if(array.length == 1)
+                              {
+                                    array = [];
+                              }
                               break;
                         }
-                        else if(this.stage[pos.y + i][pos.x + i] == BlackOrWhite.None)
+                        
+                        
+                        if( (array.length == 1) && (b == false) )
                         {
-                              putOK = 0;
-                              break;
-
+                              array = [];
                         }
+
                   }
 
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-
-                  xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x);
-                  yy = (STAGE_HEIGHT - pos.y);
-
-                  if( (xx - 1) > (yy - 1) )
-                  {
-                        t = yy - 1;
-                  }
-                  else
-                  {
-                        t = xx - 1;
-                  }
-
-                  for(let i = 1; i < t; i++ )
-                  {
-                        if(this.stage[pos.y + i][pos.x - i] == rev)
-                        {
-                              putOK++;
-                        }
-                        else if(this.stage[pos.y + i][pos.x - i] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[pos.y + i][pos.x - i] == BlackOrWhite.None)
-                        {
-                              putOK = 0;
-                              break;
-
-                        }
-                  }
-
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-
-                  xx = STAGE_WIDTH - (STAGE_WIDTH - pos.x )
-                  yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
-                  if( (xx - 1) > (yy - 1) )
-                  {
-                        t = yy - 1;
-                  }
-                  else
-                  {
-                        t = xx - 1;
-                  }
-                  
-                  for(let i = 1; i < t; i++ )
-                  {
-                        if(this.stage[pos.y - i][pos.x - i] == rev)
-                        {
-                              putOK++;
-                        }
-                        else if(this.stage[pos.y - i][pos.x - i] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[pos.y - i][pos.x - i] == BlackOrWhite.None)
-                        {
-                              putOK = 0;
-                              break;
-
-                        }
-                  }
-
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }
-
-                  putOK = 0;
-                  xx = (STAGE_WIDTH - pos.x )
-                  yy = STAGE_HEIGHT - (STAGE_HEIGHT - pos.y)
-                  if( (xx - 1) > (yy - 1) )
-                  {
-                        t = yy - 1;
-                  }
-                  else
-                  {
-                        t = xx - 1;
-                  }
-                  
-                  for(let i = 1; i < t; i++ )
-                  {
-                        if(this.stage[pos.y - i][pos.x + i] == rev)
-                        {
-                              putOK++;                                          
-                        }
-                        else if(this.stage[pos.y - i][pos.x + i] == piece)
-                        {
-                              break;
-                        }
-                        else if(this.stage[pos.y - i][pos.x + i] == BlackOrWhite.None)
-                        {
-                              putOK = 0;                                          
-                              break;
-
-
-                        }
-                  }
-
-                  if(putOK > 0)
-                  {
-                        return true;
-                  }            
-
-                  return false;
             }
-            else
+            else if( (vector.x == 0) || (vector.y == 0) ) 
             {
-                  return false;
+                  let t = 0;
+                  let b = false;
+      
+                  
+
+                  move = stageNum(vector,position);
+
+                  if(vector.x != 0)
+                  {
+                        t = move.x;
+                  }
+                  else
+                  {
+                        t = move.y;
+                  }
+
+
+                  for(let i = 1; i < t; i++)
+                  {
+                        if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == revPiece)
+                        {
+                              array.push(new Vector(position.x + (i * vector.x ),position.y + (i * vector.y )) );
+                        }
+                        else if(this.stage[position.x + (i * vector.x )][position.y  + (i * vector.y )] == piece)
+                        {
+                              b = true;
+                              break;
+                        }else
+                        {
+                              if(array.length == 1)
+                              {
+                                    array = [];
+                              }
+                              break;
+                        }      
+                  }
+                        
+                  if( (array.length == 1) && (b == false) )
+                  {
+                        array = [];
+                  }
+
+            }
+            
+
+
+            for(let i = 0; i < array.length; i++)
+            {
+                  //console.log("あああ");
+                  out_array.push(array[i]);
             }
 
+            //console.log(out_array.lenght);
       }
 
+      // ################################ 反転 ################################ 
+      Reverse(piece)
+      {
+            let array = new Array();
+            for(let y = 0; y < STAGE_HEIGHT; y++)
+            {
+                  for(let x = 0; x < STAGE_WIDTH; x++)
+                  {
+                        if (this.stage[y][x] == piece)
+                        {
 
+                        }
+                  }            
+            }
+      }
+
+      // ################################ 配置できるかどうか？ ################################ 
+      PutPosition(position,piece)
+      {
+
+            let arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(1,0));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(-1,0));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+            
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(0,1));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+            
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(0,-1));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+            
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(1,1));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+            
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(-1,1));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+            
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(1,-1));
+            if(arr.lenght > 0)
+            {
+                  return true;
+            }
+            
+
+            arr = [];
+            this.LineReversePosition(piece,position,arr,new Vector(-1,-1));
+            if(arr.length > 0)
+            {
+                  return true;
+            }
+            
+
+            return false;
+      }
 
 
       //ひっくり返すか判定
@@ -597,16 +293,7 @@ class Stage
             {
                   for(let x = 0; x < STAGE_WIDTH; x++)
                   {
-                        //黒に反転
-                        if(this.stage[y][x] == BlackOrWhite.Black)
-                        {
-                              let t = this.Reverse(BlackOrWhite.Black,new Vector(x,y));
-                        }
-                        //白に反転
-                        else if (this.stage[y][x] == BlackOrWhite.White)
-                        {
-                              let t = this.Reverse(BlackOrWhite.White,new Vector(x,y));
-                        }
+
                   }
             }
       }
@@ -685,7 +372,9 @@ class Enemy
 
       StageCollision(stage)
       {
-            
+
+
+
       }
 
 
@@ -732,25 +421,26 @@ class Player
       {
 
             let putArray = [];
-            //this.PutPiecePosition(putArray,stage);
+            let outPutPosition = [];
+            let outReversePosition = [];
 
+
+            //console.log(outPutPosition[0].putPosition.x + " , " + outPutPosition[0].putPosition.y);
 
             //デバッグ
             for(let y = 0; y < STAGE_HEIGHT;  y++)
             {
-                  for(let x = 0; x < STAGE_WIDTH; x++)
+                  for(let x = 0; x < STAGE_WIDTH;  x++)
                   {
-                        if(stage.PutPiecePosition(this.bw,new Vector(x,y)) == true)
+                        
+                        if( (stage.PutPosition(new Vector(x,y),this.bw) == true) && (stage.stage[y][x] == BlackOrWhite.None) )
                         {
+                         //     console.log(" デバッグ");
                               fill(color(0,255,0));   
                               circle((x * PIECE_WIDTH) + (PIECE_WIDTH / 2),(y * PIECE_HEIGHT) + (PIECE_HEIGHT / 2),PIECE_COLLISION_RANGE);
                         }
-                  
-                        //fill(color(0,255,0));   
-                        //circle((x * PIECE_WIDTH) + (PIECE_WIDTH / 2),(y * PIECE_HEIGHT) + (PIECE_HEIGHT / 2),PIECE_COLLISION_RANGE);
                   }
             }
-
             
             
 
@@ -781,34 +471,20 @@ class Player
 
 
 
-class Enemy
-{
-      constructor(b)
-      {
-            this.bw = b;            
-      }
-
-
-      StageCollision()
-      {
-
-      }
-
-}
-
-
 class Game
 {
       constructor()
       {
             this.stage = new Stage();
             this.player = new Player(BlackOrWhite.White);
+            this.enemy = new Enemy(BlackOrWhite.Black);
       }
 
       Update()
       {
             this.player.Update();
             this.player.StageCollision(this.stage);
+            this.enemy.StageCollision(this.stage);
 
             
       }
