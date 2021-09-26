@@ -15,6 +15,10 @@ function draw()
 
       game.Update();
       game.Renderer();
+
+
+      frameRate(60);
+
 }
 
 

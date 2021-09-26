@@ -1,12 +1,27 @@
 const STAGE_WIDTH = 10;
 const STAGE_HEIGHT = 20;
+
 const STAGE_OFFSET_WIDTH = 200;
 const STAGE_OFFSET_HEIGHT = 150;
+
 const CELL = 30;
-const DONW_SPEED = 3;
+const DONW_SPEED = 5;
+
 const PLAYER_START_POSITION_X = 3;
 const PLAYER_START_POSITION_Y = 0;
 
+const LINE_DELETE_ANIMATION = 5;
+const LINE_ANIMATION_SPEED = 20;
+
+let keyRight = false;
+let keyLeft = false;
+let keyShift = false;
+
+let holdLeft = false;
+let holdRight = false;
+let holdShift = false;
+
+let animation = 0;      // アニメーション
 
 
 const ColorCode = [
@@ -22,7 +37,8 @@ const ColorCode = [
       [128,0,128],      //紫      
 ];
 //ブロック
-const Block = [
+const Block = 
+[
             [
                   [1,1,1,1],
                   [0,0,0,0],
@@ -116,20 +132,27 @@ class Effect
 
 }
 
+// ################################################################
+// # stage クラス
+// ################################################################
 class Stage
 {
       constructor()
       {
-      　    this.combo = [];              //コンボライン
-            this.effect = [];             //ライン削除エフェクト
-            this.animation = 0;           //アニメーション
-            this.nowEffect = false;       //エフェクト中かどうか？
-            this.deleteLine = false;      //削除するラインがあるかどうか？
-            this.maskLine = false;        //点滅するライン
+
+            this.line = [STAGE_HEIGHT - 1];     //コンボライン
+            this.effect = [];                   //ライン削除エフェクト
+            
+            this.nowEffect = false;             //エフェクト中かどうか？
+            this.deleteLine = false;            //削除するラインがあるかどうか？
+            this.maskLine = false;              //点滅するライン
+            this.isNext =  true;                //次のブロックを生成するかどうか？
+            this.deleteAnimation = 0;           //削除ラインの点滅回数
 
 
             //ステージ
-            this.stage = [
+            this.stage = 
+            [
                   [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
@@ -153,12 +176,10 @@ class Stage
             ]
       }
 
-// ################################ ライン削除 ################################ 
+      // ################################ ライン削除 ################################ 
       DeleteLine()
       {
-
             //削除ラインを算出
-            let line = [];
             for(let y = 0; y <= STAGE_HEIGHT - 2; y++)
             {
                   let b = false;
@@ -171,116 +192,91 @@ class Stage
                         }
                         else
                         {
-
                               b = true;
                         }                       
                   }     
 
+                  //削除するラインの時
                   if(b == true)
                   {
-                        line.push(y);
-
-                  }
-            }
-
-            //連続コンボラインを算出
-            let comboLine = [];
-
-            if(line.length > 0)
-            {
-
-                  line.sort(function(a,b)
-                  {
-                        return a.value - b.value;
-                  });
-
-
-                  let t = 0;                  
-                  let isCombo = false;
-                  let combo = [];   //コンボライン
-                  for(let i = 0; i< line.length; i++)
-                  {
-                        if(isCombo == false)
-                        {
-                              combo.push(line[i]);
-                              t += line[i] + 1;
-                              isCombo = true;
-                        }
-                        else
-                        {
-                              if(t == line[i])
-                              {
-                                    combo.push(line[i]);
-                                    t++;
-
-                                    if(i == line.length -1)
-                                    {
-                                          comboLine.push(combo);
-                                    }
-                              }
-                              else
-                              {
-                                    comboLine.push(combo);
-                                    t = line[i] + 1;
-                                    combo = [];
-                                    combo.push(line[i]);
-                              }
-                        }
-                  }
-
-
-
-
-
-                  //エフェクトを設定
-                  for(let i = 0; i < comboLine.length; i++)
-                  {
-                        this.effect.push(comboLine[i]);
-                  }
-
-                  if(comboLine.length > 0)
-                  {
-                        this.deleteLine = true;
+                        this.line[y] = true;
                   }
                   else
                   {
-                        this.deleteLine = false;
-                        
+                        this.line[y] = false;
+                  }
+            }
+
+            //削除するラインがあるかどうか？
+            for(let t of this.line)
+            {
+                  if( t == true)
+                  {
+                        this.isNext = false;
+                        break;
                   }
             }
       }
 
+
+      // ################################ ラインを削除 ################################ 
+      LineDelete()
+      {
+            for(let y = 0; y <= STAGE_HEIGHT - 1; y++)
+            {
+                  if(this.line[y] == true)
+                  {
+                        for(let x = 1; x < STAGE_WIDTH - 1; x++)
+                        {
+                              this.stage[y][x] = 0;
+                        }
+                  }     
+            }
+      }
+
+      // ################################ ラインを詰める ################################ 
       LineShift()
       {
+            for(let y = STAGE_HEIGHT - 3; y > 0; y--)
+            {
+                  for(let x = 1; x < STAGE_WIDTH - 1; x++)
+                  {
+                        let t = this.stage[y][x];
+                        this.stage[y + 1][x] = t;
+                  }     
+            }
 
       }
 
-
+      // ################################ Update ################################ 
       Update()
       {
-            this.DeleteLine();
-
-            console.log(this.deleteLine);
+            
 
 
-            this.animation++;
-            if(this.animation > 60)
+
+            //点滅アニメーション
+            if( ((animation % LINE_ANIMATION_SPEED) == 0) && (this.isNext == false) )
             {
-                  this.animation = 0;
-            }
+                  this.deleteAnimation++;
+                  if(this.deleteAnimation > LINE_DELETE_ANIMATION)
+                  {
+                        this.deleteAnimation = 0;
+                        this.maskLine = false;
+                        this.isNext = true;
 
-            if( (this.animation % 10 == 0) && (this.deleteLine == true) )
-            {
-                  this.maskLine = true;
+                        this.LineDelete();      //ラインを削除
+                        this.LineShift();       //ラインを詰める
+                  }
+                  else
+                  {
+                        this.maskLine = !this.maskLine;
+                  }
             }
-            else
-            {
-                  this.maskLine = false;
-            }
-
+            
       }
 
-
+      // ################################ Renderer ################################ 
       Renderer()
       {
             
@@ -290,49 +286,30 @@ class Stage
                   {
                         fill(ColorCode[ this.stage[y][x] ][0],ColorCode[ this.stage[y][x] ][1],ColorCode[ this.stage[y][x] ][2]);
                         rect( STAGE_OFFSET_WIDTH + x * CELL,STAGE_OFFSET_HEIGHT + y * CELL,CELL,CELL);
-                  }
-                        
+                  }                        
             }
 
             if(this.maskLine == true)
             {
-                  let t =  0;
-                  for(let y = 0; y < STAGE_HEIGHT - 2; y++)
+                  for(let y = 0; y < this.stage.length - 1; y++)
                   {
-                        if(combo[t] == y)
+                        if(this.line[y] == true)
                         {
-                              for(let x = 1; x < STAGE_WIDTH - 1; x++)
+                              for(let x = 1; x < this.stage[y].length - 1; x++)
                               {
                                     fill(0,0,0);
-                                    rect( STAGE_OFFSET_WIDTH + x * CELL,STAGE_OFFSET_HEIGHT + y * CELL,CELL,CELL);
-                              }
-                              if(this.combo.length - 2  > t)
-                              {
-                                    t++;
-                              }
+                                    rect( STAGE_OFFSET_WIDTH + (x * CELL),STAGE_OFFSET_HEIGHT + (y * CELL),CELL,CELL);
+                              }                              
                         }
                   }
             }
-            
-                  
-                 
-                  
-            
-
-
       }
 
       
 }
 
-let keyRight = false;
-let keyLeft = false;
-let keyShift = false;
 
-let holdLeft = false;
-let holdRight = false;
-let holdShift = false;
-
+// ################################ キーを押したとき ################################ 
 function keyPressed()
 {
 
@@ -358,6 +335,7 @@ function keyPressed()
       }
 }
 
+// ################################  キーを離したとき ################################ 
 function keyReleased()
 {
       keyRight = false;
@@ -371,13 +349,16 @@ function keyReleased()
       
 }
 
+// ################################################################
+// # Player クラス
+// ################################################################
 class Player
 {
       constructor()
       {
             this.position = new Vector(3,0);
             this.put = true;
-            this.animation = 0;
+            
             this.blockNumber = 0;
             this.gameOver = false;
             this.block = [4];
@@ -398,12 +379,11 @@ class Player
 
 
 
-
-      Next()
+      // ################################  次のブロックを生成 ################################ 
+      Next()                  
       {
-          //this.blockNumber = GetRandom(0,6);
-           this.blockNumber = 1; //デバッグ用
-
+            this.blockNumber = 1;
+            
             for(let y = 0; y < 4; y++)
             {
                   for(let x = 0; x < 4; x++)
@@ -411,7 +391,7 @@ class Player
                         this.block[y][x] = 0;
                   }
             }
-            
+               
 
             for(let y = 0; y < 4; y++)
             {
@@ -423,10 +403,10 @@ class Player
                               this.block[y][x] = 1;
                         }
                   }
-            }
-            
-            
+            }            
       }
+
+      // ################################  キーボード入力 ################################ 
       KeyBoard()
       {
             if(!this.KeyPrevLeft && keyLeft)
@@ -478,7 +458,7 @@ class Player
                               let xx = (cos(PI / 2 * this.rotate) * (x - 1.5)) + (-sin(PI / 2 * this.rotate) * (y - 1.5) );
                               let yy = (sin(PI / 2 * this.rotate) * (x - 1.5)) + (cos(PI / 2 * this.rotate) * (y - 1.5) );
  
-                              console.log(Math.round(yy + 1.5) + " , " + Math.round((xx + 1.5)));
+                              //console.log(Math.round(yy + 1.5) + " , " + Math.round((xx + 1.5)));
                               this.block[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1;
                         }else
                         {
@@ -488,49 +468,14 @@ class Player
             }       
       }
 
-// ################################ 更新 ################################ 
+      // ################################ 更新 ################################ 
       Update()
-      {
-
-            
+      {            
             this.KeyBoard();
-      
-
-            if((this.animation % DONW_SPEED) == 0)
-            {
-                  this.position.y++;
-                  this.isDown = true;
-            }else
-            {
-                  this.isDown = false;
-            }
-
-            if(this.animation > 60)
-            {
-                  this.animation = 0;
-            }
-
-            this.animation++;
-
-
-
-            //console.log(this.position.x);
       }
 
       UpdateStage(stage)
-      {
-
-            for(let y = 0; y < STAGE_HEIGHT; y++)
-            {
-                  for(let x = 0; x < STAGE_HEIGHT; x++)
-                  {
-
-                        //stage.stage[this.position.y + y][this.position.x + x] = Block[][][];                        
-                  }           
-
-
-            }           
-
+      {     
 
       }
       
@@ -539,9 +484,9 @@ class Player
       Collision(stage)
       {
 
-            if(this.gameOver == false)
+            if( (this.gameOver == false)　&& (this.isPut == false) )
             {
-                  //壁判定            
+                  //左右の壁判定            
                   if( (keyLeft == true) || (keyRight == true) )
                   {
                         for(let yy = 0; yy < 4; yy++)
@@ -550,7 +495,7 @@ class Player
                               {            
                                     if(Block[this.blockNumber][yy][xx] == 1) 
                                     {
-                                          if( (stage.stage[this.position.y + yy ][this.position.x + xx] == 1) )
+                                          if( stage.stage[this.position.y + yy ][this.position.x + xx] > 0 )
                                           {                                          
                                                 if(keyLeft == true)
                                                 {
@@ -566,16 +511,22 @@ class Player
                         }
                   }
 
-                  //下
-                  if( this.isPut == false)
+                  //下との当たり判定
+                  if(this.isPut == false)
                   {
+
+                        if( (animation % DONW_SPEED) == 0 )
+                        {
+                              this.position.y++;
+                        }
+
                         for(let yy = 0; yy < 4; yy++)
                         {
                               for(let xx = 0; xx < 4; xx++)
                               {            
                                     if((Block[this.blockNumber][yy][xx] == 1) )
                                     {
-                                          if( (stage.stage[this.position.y + yy ][this.position.x + xx] == 1) || (stage.stage[this.position.y + yy ][this.position.x + xx] > 1))
+                                          if( stage.stage[this.position.y + yy ][this.position.x + xx] > 0)
                                           {
                                                 this.position.y--;
                                                 this.isPut = true;
@@ -586,40 +537,42 @@ class Player
                   }
                   
                   //　ブロック配置
-                  if(this.isPut == true )
+                  if( (this.isPut == true) && (stage.isNext == true) )
                   {
                         for(let yy = 0; yy < 4; yy++)
                         {
                               for(let xx = 0; xx < 4; xx++)
                               {            
-                                    if(this.position. y >= 0)
-                                    {
-                                          if( (Block[this.blockNumber][yy][xx] == 1) )
-                                          {                 
-                                                stage.stage[this.position.y + yy ][this.position.x + xx] = this.blockNumber + 2;
-                                          }
-                                    }
+                                    if(this.block[yy][xx] == 1)
+                                    {                 
+                                          stage.stage[this.position.y + yy ][this.position.x + xx] = this.blockNumber + 2;
+                                    }                                    
                               }
                         }
                   }
             }
 
 
-            //リセット
+            
+
+            
+            //ブロックを置いた時
             if(this.isPut == true)
-            {           
-                  stage.DeleteLine();
-                  this.isPut = false;
-                  
-
-
-                  
-                  if(this.gameOver == false)
+            {
+                  stage.DeleteLine();     //削除するライン
+                  if(stage.isNext == true)
                   {
-                        this.position.x = PLAYER_START_POSITION_X;                  
-                        this.position.y = PLAYER_START_POSITION_Y;                  
-                        this.Next();
+                        this.position.x = PLAYER_START_POSITION_X;
+                        this.position.y = PLAYER_START_POSITION_Y;
+
+                        this.Next();      //次のブロックを生成
+
                         this.isPut = false;
+                  }
+                  else
+                  {     
+                        this.position.x = PLAYER_START_POSITION_X;
+                        this.position.y = PLAYER_START_POSITION_Y;
                   }
             }
 
@@ -628,23 +581,27 @@ class Player
 
 
 
+
 // ################################ レンダリング ################################ 
       Renderer()
       {
-            for(let y = 0; y < 4; y++)
+            //ブロック
+            if(this.isPut == false)
             {
-                  for(let x = 0; x < 4; x++)
+                  for(let y = 0; y < 4; y++)
                   {
-                        if(this.block[y][x] != 0)
+                        for(let x = 0; x < 4; x++)
                         {
-                              fill(ColorCode[ this.blockNumber　+ 2 ][0],ColorCode[ this.blockNumber + 2 ][1],ColorCode[ this.blockNumber + 2 ][2]);
-                              rect( (this.position.x * CELL) + STAGE_OFFSET_WIDTH + (x * CELL),(this.position.y * CELL) + STAGE_OFFSET_HEIGHT +(y * CELL),CELL,CELL);
+                              if(this.block[y][x] != 0)
+                              {
+                                    fill(ColorCode[ this.blockNumber　+ 2 ][0],ColorCode[ this.blockNumber + 2 ][1],ColorCode[ this.blockNumber + 2 ][2]);
+                                    rect( (this.position.x * CELL) + STAGE_OFFSET_WIDTH + (x * CELL),(this.position.y * CELL) + STAGE_OFFSET_HEIGHT +(y * CELL),CELL,CELL);
+                              }
                         }
-                  }
+                  }                  
             }
-            
 
-
+            //ゲームーオーバー
             if(this.gameOver == true)
             {
                   
@@ -673,10 +630,21 @@ class Game
 
       Update()
       {
+
             this.player.Update();
+            this.stage.Update();
 
             this.player.Collision(this.stage);
-            this.stage.Update();
+
+
+            animation++;
+            if(animation > 60)
+            {
+                  animation = 0;
+            }
+
+            
+
       }
 
       Renderer()
