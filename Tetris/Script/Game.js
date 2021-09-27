@@ -140,7 +140,6 @@ class Stage
       constructor()
       {
 
-            this.line = [STAGE_HEIGHT - 1];     //コンボライン
             this.effect = [];                   //ライン削除エフェクト
             
             this.nowEffect = false;             //エフェクト中かどうか？
@@ -148,7 +147,7 @@ class Stage
             this.maskLine = false;              //点滅するライン
             this.isNext =  true;                //次のブロックを生成するかどうか？
             this.deleteAnimation = 0;           //削除ラインの点滅回数
-
+            this.deleteNum = 0;                 //削除するラインの数
 
             //ステージ
             this.stage = 
@@ -176,103 +175,71 @@ class Stage
             ]
       }
 
-      // ################################ ライン削除 ################################ 
-      DeleteLine()
+      // ################################ ラインを削除 ################################ 
+      LineDelete(y)
       {
-            //削除ラインを算出
-            for(let y = 0; y <= STAGE_HEIGHT - 2; y++)
+            let b = false;
+            for(let x = 1; x < STAGE_WIDTH - 1; x++)
             {
-                  let b = false;
-                  for(let x = 1; x <= STAGE_WIDTH - 2; x++)
+                  if(this.stage[y][x] > 1)
                   {
-                        if(this.stage[y][x] == 0)
-                        {
-                              b = false;
-                              break;
-                        }
-                        else
-                        {
-                              b = true;
-                        }                       
-                  }     
-
-                  //削除するラインの時
-                  if(b == true)
-                  {
-                        this.line[y] = true;
+                        b = true;
                   }
                   else
                   {
-                        this.line[y] = false;
-                  }
-            }
-
-            //削除するラインがあるかどうか？
-            for(let t of this.line)
-            {
-                  if( t == true)
-                  {
-                        this.isNext = false;
+                        b = false;
                         break;
                   }
             }
-      }
 
 
-      // ################################ ラインを削除 ################################ 
-      LineDelete()
-      {
-            for(let y = 0; y <= STAGE_HEIGHT - 1; y++)
+            if(b == true)
             {
-                  if(this.line[y] == true)
+                  for(let x = 1; x < STAGE_WIDTH - 1; x++)
                   {
-                        for(let x = 1; x < STAGE_WIDTH - 1; x++)
-                        {
-                              this.stage[y][x] = 0;
-                        }
-                  }     
+                        this.stage[y][x] = 0;
+                  }
             }
+
+            if(b == false)
+            {
+                  return false;
+            }
+            else
+            {
+                  return true;
+            }
+
+            
       }
 
       // ################################ ラインを詰める ################################ 
       LineShift()
       {
-            for(let y = STAGE_HEIGHT - 3; y > 0; y--)
+            for(let line = STAGE_HEIGHT - 1; line > 0; line--)
             {
-                  for(let x = 1; x < STAGE_WIDTH - 1; x++)
+                  if(this.LineDelete(line) == true)
                   {
-                        let t = this.stage[y][x];
-                        this.stage[y + 1][x] = t;
-                  }     
-            }
+                        console.log("ああああ");
+                        for(let y = line; y > 0; y--)
+                        {
+                              for(let x = 1; x < STAGE_WIDTH - 1; x++)
+                              {
+                                    let t = this.stage[y - 1][x];
 
-      }
+                                    this.stage[y][x] = t;
+                                    this.stage[y - 1][x] = 0;
+                              }      
+                        }
+                        
+                        line = STAGE_HEIGHT - 1;
+                  }
+            }
+      }     
 
       // ################################ Update ################################ 
       Update()
       {
-            
-
-
-
-            //点滅アニメーション
-            if( ((animation % LINE_ANIMATION_SPEED) == 0) && (this.isNext == false) )
-            {
-                  this.deleteAnimation++;
-                  if(this.deleteAnimation > LINE_DELETE_ANIMATION)
-                  {
-                        this.deleteAnimation = 0;
-                        this.maskLine = false;
-                        this.isNext = true;
-
-                        this.LineDelete();      //ラインを削除
-                        this.LineShift();       //ラインを詰める
-                  }
-                  else
-                  {
-                        this.maskLine = !this.maskLine;
-                  }
-            }
             
       }
 
@@ -382,7 +349,7 @@ class Player
       // ################################  次のブロックを生成 ################################ 
       Next()                  
       {
-            this.blockNumber = 1;
+            this.blockNumber = GetRandom(0,6);
             
             for(let y = 0; y < 4; y++)
             {
@@ -436,7 +403,7 @@ class Player
 
       }
 
-// ################################ 回転 ################################ 
+      // ################################ 回転 ################################ 
       Rotate()
       {
             for(let y = 0; y < 4; y++)
@@ -457,15 +424,15 @@ class Player
 
                               let xx = (cos(PI / 2 * this.rotate) * (x - 1.5)) + (-sin(PI / 2 * this.rotate) * (y - 1.5) );
                               let yy = (sin(PI / 2 * this.rotate) * (x - 1.5)) + (cos(PI / 2 * this.rotate) * (y - 1.5) );
- 
-                              //console.log(Math.round(yy + 1.5) + " , " + Math.round((xx + 1.5)));
                               this.block[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1;
-                        }else
-                        {
-
                         }
                   }
-            }       
+            }
+            
+            //this.position.x+= 2;
+            //this.position.x+= 2;
+
+
       }
 
       // ################################ 更新 ################################ 
@@ -517,7 +484,7 @@ class Player
 
                         if( (animation % DONW_SPEED) == 0 )
                         {
-                              this.position.y++;
+                              //this.position.y++;
                         }
 
                         for(let yy = 0; yy < 4; yy++)
@@ -537,7 +504,7 @@ class Player
                   }
                   
                   //　ブロック配置
-                  if( (this.isPut == true) && (stage.isNext == true) )
+                  if( (this.isPut == true))
                   {
                         for(let yy = 0; yy < 4; yy++)
                         {
@@ -559,21 +526,11 @@ class Player
             //ブロックを置いた時
             if(this.isPut == true)
             {
-                  stage.DeleteLine();     //削除するライン
-                  if(stage.isNext == true)
-                  {
-                        this.position.x = PLAYER_START_POSITION_X;
-                        this.position.y = PLAYER_START_POSITION_Y;
+                  this.isPut = false;
+                  this.position.x = PLAYER_START_POSITION_X;
+                  this.position.y = PLAYER_START_POSITION_Y;
 
-                        this.Next();      //次のブロックを生成
-
-                        this.isPut = false;
-                  }
-                  else
-                  {     
-                        this.position.x = PLAYER_START_POSITION_X;
-                        this.position.y = PLAYER_START_POSITION_Y;
-                  }
+                  stage.LineShift();
             }
 
       }
