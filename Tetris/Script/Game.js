@@ -1,5 +1,5 @@
 const STAGE_WIDTH = 10;
-const STAGE_HEIGHT = 20;
+const STAGE_HEIGHT = 23;
 
 const STAGE_OFFSET_WIDTH = 200;
 const STAGE_OFFSET_HEIGHT = 150;
@@ -8,7 +8,7 @@ const CELL = 30;
 const DONW_SPEED = 5;
 
 const PLAYER_START_POSITION_X = 3;
-const PLAYER_START_POSITION_Y = 0;
+const PLAYER_START_POSITION_Y = 3;
 
 const LINE_DELETE_ANIMATION = 5;
 const LINE_ANIMATION_SPEED = 20;
@@ -155,6 +155,10 @@ class Stage
                   [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
+
+                  [1,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,1],
@@ -213,6 +217,20 @@ class Stage
             
       }
 
+      // ################################ GameOver判定 ################################ 
+      getGameOver()
+      {
+            for(let i = 1; i < STAGE_WIDTH - 1; i++)
+            {
+                  if(this.stage[3][i] > 1)
+                  {
+                        return true;
+                  }
+            }
+
+            return false;
+      }
+
       // ################################ ラインを詰める ################################ 
       LineShift()
       {
@@ -220,7 +238,6 @@ class Stage
             {
                   if(this.LineDelete(line) == true)
                   {
-                        console.log("ああああ");
                         for(let y = line; y > 0; y--)
                         {
                               for(let x = 1; x < STAGE_WIDTH - 1; x++)
@@ -235,6 +252,7 @@ class Stage
                         line = STAGE_HEIGHT - 1;
                   }
             }
+
       }     
 
       // ################################ Update ################################ 
@@ -247,7 +265,7 @@ class Stage
       Renderer()
       {
             
-            for(let y = 0; y < this.stage.length; y++)
+            for(let y = 3; y < this.stage.length; y++)
             {
                   for(let x = 0; x < this.stage[y].length; x++)
                   {
@@ -349,7 +367,8 @@ class Player
       // ################################  次のブロックを生成 ################################ 
       Next()                  
       {
-            this.blockNumber = GetRandom(0,6);
+            this.blockNumber = 0;
+            //this.blockNumber = GetRandom(0,6);
             
             for(let y = 0; y < 4; y++)
             {
@@ -429,10 +448,76 @@ class Player
                   }
             }
             
-            //this.position.x+= 2;
-            //this.position.x+= 2;
+            let b = false;
+            for(let x = 0; x< 4; x++)
+            {
+                  b = false;
+                  for(let y = 0; y < 4; y++)
+                  {
+                        if(this.block[y][0] == 0)
+                        {
+                              b = true;
+                        }
+                        else
+                        {
+                              b = false;
+                              break;
+                        }
+                  }
+                  
+                  if( b == true)
+                  {
+                        for(let i = 0; i< 4; i++)
+                        {
+                              for(let j = 0; j<= 2; j++)
+                              {
+                                    let t = this.block[i][j + 1];
+                                    this.block[i][j + 1] = 0;
+                                    this.block[i][j] = t;
+                              }
+                        }
+                  }
+                  else
+                  {
+                        break;
+                  }
+            }     
 
 
+            b = false;
+            for(let x = 0; x< 4; x++)
+            {
+                  b = false;
+                  for(let y = 0; y < 4; y++)
+                  {
+                        if(this.block[0][y] == 0)
+                        {
+                              b = true;
+                        }
+                        else
+                        {
+                              b = false;
+                              break;
+                        }
+                  }
+                  
+                  if( b == true)
+                  {
+                        for(let i = 0; i< 4; i++)
+                        {
+                              for(let j = 0; j<= 2; j++)
+                              {
+                                    let t = this.block[j + 1][i];
+                                    this.block[j + 1][i] = 0;
+                                    this.block[j][i] = t;
+                              }
+                        }
+                  }
+                  else
+                  {
+                        break;
+                  }
+            }     
       }
 
       // ################################ 更新 ################################ 
@@ -460,7 +545,7 @@ class Player
                         {
                               for(let xx = 0; xx < 4; xx++)
                               {            
-                                    if(Block[this.blockNumber][yy][xx] == 1) 
+                                    if(this.block[yy][xx] == 1) 
                                     {
                                           if( stage.stage[this.position.y + yy ][this.position.x + xx] > 0 )
                                           {                                          
@@ -481,17 +566,17 @@ class Player
                   //下との当たり判定
                   if(this.isPut == false)
                   {
-
+                        //ブロック落下
                         if( (animation % DONW_SPEED) == 0 )
                         {
-                              //this.position.y++;
+                              this.position.y++;
                         }
 
                         for(let yy = 0; yy < 4; yy++)
                         {
                               for(let xx = 0; xx < 4; xx++)
                               {            
-                                    if((Block[this.blockNumber][yy][xx] == 1) )
+                                    if(this.block[yy][xx] > 0)
                                     {
                                           if( stage.stage[this.position.y + yy ][this.position.x + xx] > 0)
                                           {
@@ -499,12 +584,14 @@ class Player
                                                 this.isPut = true;
                                           }
                                     }
+
+
                               }
                         }
                   }
                   
                   //　ブロック配置
-                  if( (this.isPut == true))
+                  if(this.isPut == true)
                   {
                         for(let yy = 0; yy < 4; yy++)
                         {
@@ -526,11 +613,24 @@ class Player
             //ブロックを置いた時
             if(this.isPut == true)
             {
-                  this.isPut = false;
+                  this.Next();
+                  stage.LineShift();
+
+                  if (stage.getGameOver() == true)
+                  {
+//                        console.log("GAME OVER");
+                        this.gameOver = true;
+                  }
+                  else
+                  {
+                        this.isPut = false;
+                  }
+
                   this.position.x = PLAYER_START_POSITION_X;
                   this.position.y = PLAYER_START_POSITION_Y;
 
-                  stage.LineShift();
+
+
             }
 
       }
