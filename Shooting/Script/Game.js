@@ -133,7 +133,7 @@ class Enemy
             
             //console.log(this.bullet.length);
 
-            if( GetRandom(1,100) % 50 == 0　)
+            if( GetRandom(1,100) % 50 == 0 )
             {
                   Bullet.Instance(this.bullet,this.position,BulletType.Enemy);
             }

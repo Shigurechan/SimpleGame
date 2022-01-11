@@ -1,7 +1,7 @@
 
 const PI = 3.14159;           //円周率
 const sinSpeed = PI / 100.0;  //sin波　加算
-const speed = 10;               //移動速度
+const speed = 10;             //移動速度
 
 //ベクトルの引き算　
 //引数　Vector型
@@ -25,6 +25,14 @@ function Range(a,b)
 //ベクター
 class Vector
 {
+      add(other)
+      {
+            console.assert(other instanceof Vector);
+
+            return new Vector(this.x + other.x,this.y + other.y);
+      }
+
+
       constructor(xx,yy)
       {
             this.x = xx;

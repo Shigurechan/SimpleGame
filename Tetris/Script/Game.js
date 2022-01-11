@@ -536,7 +536,7 @@ class Player
       Collision(stage)
       {
 
-            if( (this.gameOver == false)　&& (this.isPut == false) )
+            if( (this.gameOver == false) && (this.isPut == false) )
             {
                   //左右の壁判定            
                   if( (keyLeft == true) || (keyRight == true) )
