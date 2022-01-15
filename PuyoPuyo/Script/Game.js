@@ -2,8 +2,7 @@
 
 const PUYO_SIZE = 25;   //ぷよサイズ
 const WALL = 5;         //壁カラー
-let None = 0;         //なしマス
-
+let None;         //なしマス
 
 const STAGE_HEIGHT = 19;
 const STAGE_WIDTH = 12;
@@ -43,6 +42,7 @@ let puyo =
     [0,0]
 ];
 
+let colorType = new Array(2);
 
 
 
@@ -54,7 +54,6 @@ class Stage
     constructor()
     {
         None = color(0,0,0);
-
         for(let y = 0; y < STAGE_HEIGHT; y++)
         {
             for(let x = 0; x < STAGE_WIDTH; x++)
@@ -129,7 +128,6 @@ class Control
     //　ぷよを設定
     setPuyo()
     {
-        this.colorType = new Array(2);
         
         //switch(Math.floor(random(0,5)))
         switch(0)
@@ -137,41 +135,41 @@ class Control
             //赤
             case 0:
                 {
-                    this.colorType[0] = color(255,0,0);
+                    colorType[0] = color(255,0,0);
                 }
             break;
 
             //青
             case 1:
                 {
-                    this.colorType[0] = color(24,235,249);
+                    colorType[0] = color(24,235,249);
                 }
             break;
 
             //黄色
             case 2:
                 {
-                    this.colorType[0] = color(255,255,0);
+                    colorType[0] = color(255,255,0);
                 }
             break;
             
             //緑
             case 3:
                 {
-                    this.colorType[0] = color(0,528,0);
+                    colorType[0] = color(0,528,0);
                 }
             break;
 
             //紫
             case 4:
                 {
-                    this.colorType[0] = color(192,48,192);
+                    colorType[0] = color(192,48,192);
                 }
             break;
 
             default:
                 {
-                    console.log("this.colorType" + this.colorType);
+                    console.log("colorType" + colorType);
                 }            
         }
 
@@ -182,47 +180,70 @@ class Control
             //赤
             case 0:
                 {
-                    this.colorType[1] = color(255,0,0);
+                    colorType[1] = color(255,0,0);
                 }
             break;
 
             //青
             case 1:
                 {
-                    this.colorType[1] = color(24,235,249);
+                    colorType[1] = color(24,235,249);
                 }
             break;
 
             //黄色
             case 2:
                 {
-                    this.colorType[1] = color(255,255,0);
+                    colorType[1] = color(255,255,0);
                 }
             break;
          
             //緑
             case 3:
                 {
-                    this.colorType[1] = color(0,528,0);
+                    colorType[1] = color(0,528,0);
                 }
             break;
 
             //紫
             case 4:
                 {
-                    this.colorType[1] = color(192,48,192);
+                    colorType[1] = color(192,48,192);
                 }
             break;
 
             default:
                 {
-                    console.log("this.colorType" + this.colorType);
+                    console.log("colorType" + colorType);
                 }            
         }
 
+//        console.log(colorType.toString());
+//        console.log(None.toString());
+/////////////////////////////////////////////////////////////////////////////
+        puyo[0][0] = None;
+        puyo[0][1] = None;
+        puyo[1][0] = None;
+        puyo[1][1] = None;
 
-        puyo[0][0] = this.colorType[0];
-        puyo[1][0] = this.colorType[1];
+        puyo[0][0] = colorType[0];
+        puyo[0][1] = None;
+        puyo[1][0] = colorType[1];
+        puyo[1][1] = None;
+        
+//////////////////////////////////////////////////////////////////////////////
+/*
+console.log(puyo[0][0].toString());
+console.log(puyo[0][1].toString());
+console.log(puyo[1][0].toString());
+console.log(puyo[1][1].toString());
+console.log("");
+console.log("");
+*/
+
+
+//        console.log(puyo[0][1].toString());
+
     }
 
 
@@ -243,13 +264,14 @@ class Control
         this.time  = 0;
         this.rotate = 0;
         this.sideCollision = false;
-        this.setPuyo();
         this.comboArray = new Array(0); //コンボ
         this.comboList = new Array(0);
         this.comboHistory = new Array(0);   //一時変数　コンボ履歴
         this.comboFirst = true;
         this.comboColor;
         this.combo  = new Array(0);
+
+        this.setPuyo();
 
     }
 
@@ -305,7 +327,7 @@ class Control
                 this.p = new Vector(pos.x,pos.y + 1);
                 this.comboArray.push(new Vector(pos.x,pos.y + 1));
                 this.comboHistory.push(new Vector(pos.x,pos.y + 1));
-                console.log("Down   " + (this.p.x) + " , " + (this.p.y));
+//                console.log("Down   " + (this.p.x) + " , " + (this.p.y));
 
                 this.ComboCheck(this.p,puyoColor);
             }
@@ -315,7 +337,7 @@ class Control
         {
             if ( this.isComboList(new Vector(pos.x,pos.y - 1)) == false )
             {
-                console.log("Up     " + (pos.x) + " , " + (pos.y - 1));
+//                console.log("Up     " + (pos.x) + " , " + (pos.y - 1));
 
                 this.p = new Vector(pos.x,pos.y - 1);
                 this.comboArray.push(new Vector(pos.x,pos.y - 1));
@@ -329,7 +351,7 @@ class Control
         {
             if ( this.isComboList(new Vector(pos.x + 1,pos.y)) == false )
             {
-                console.log("Right      " + (pos.x + 1) + " , " + (pos.y));
+//                console.log("Right      " + (pos.x + 1) + " , " + (pos.y));
 
                 this.p = new Vector(pos.x + 1,pos.y);
                 this.comboArray.push(new Vector(pos.x + 1,pos.y));
@@ -343,7 +365,7 @@ class Control
         {
             if ( this.isComboList(new Vector(pos.x - 1,pos.y)) == false )
             {
-                console.log("Left       " + (pos.x - 1) + " , " + (pos.y));
+//                console.log("Left       " + (pos.x - 1) + " , " + (pos.y));
 
                 this.p = new Vector(pos.x - 1,pos.y);
                 this.comboArray.push(new Vector(pos.x - 1,pos.y));
@@ -388,15 +410,13 @@ class Control
         }
         this.comboArray.length = 0;
 
-
+        //コンボしたブロックを削除
         for(let i = 0; i < this.combo.length; i++)
         {
             board[this.combo[i].y][this.combo[i].x] = None;
         }
 
-//        console.log("");
-//        console.log("");
-//        console.log("");
+        this.combo.length = 0;
         
     }
 
@@ -423,41 +443,82 @@ class Control
             }
         }
 
+        /*
+        console.log(puyo[0][0].toString());
+        console.log(puyo[0][1].toString());
+        console.log(puyo[1][0].toString());
+        console.log(puyo[1][1].toString());
+        console.log("");
+        console.log("");
+        */
+
+
         
-        //スペースキー
-        if(keyIsDown(" ".charCodeAt(0)) && (this.pressSpace == false) )
+    // ################################ 回転 ################################ 
+        if( keyIsDown(" ".charCodeAt(0)) && (this.pressSpace == false) )
         {
-            this.rotate += 1;
-            if(this.rotate > 3)
+
+            this.rotate += 1.0;
+            if(this.rotate > 3.0)
             {
-                  this.rotate = 0;
+                this.rotate = 0.0;
             }
 
             this.pressSpace = true;
 
+            this.puyo_temp = [[0,0],[0,0]]; //一時変数
+
             for(let y = 0; y < 2; y++)
             {
-                  for(let x = 0; x < 2; x++)
-                  {
-                        if(puyo[y][x] != 0)
+                for(let x = 0; x < 2; x++)
+                {
+                    if(puyo[y][x].toString() != None.toString())
+                    {
+                        let xx = (cos( (PI / 2.0) * this.rotate) * (x - 0.5)) + (-sin( (PI / 2.0) * this.rotate) * (y - 0.5));
+                        let yy = (sin( (PI / 2.0) * this.rotate) * (x - 0.5)) + ( cos( (PI / 2.0) * this.rotate) * (y - 0.5));
+                        
+
+                        if ( puyo[y][x].toString() == colorType[0].toString())
                         {
-//                            console.log("あああ\n");
-                              let xx = (cos(PI / 2 * this.rotate) * x) + (-sin(PI / 2 * this.rotate) * y);
-                              let yy = (sin(PI / 2 * this.rotate) * x) + (cos(PI / 2 * this.rotate) * y);
-
-                                
-                              console.log("     y " + Math.round(yy));
-                              console.log("     x " + Math.round(xx));
-
-  //                            console.log("y " + Math.round(yy + 1.5));
-  //                            console.log("x " + Math.round(xx + 1.5));
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-                              //puyo[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1;
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+                            this.puyo_temp[Math.round(yy + 0.5)][Math.round((xx + 0.5))] = colorType[0];
                         }
-                  }
+                        else if ( puyo[y][x].toString() == colorType[1].toString())
+                        {
+                            this.puyo_temp[Math.round(yy + 0.5)][Math.round((xx + 0.5))] = colorType[1];
+                        }
+
+                    }
+                }
             }
+
+
+
+
+
+            console.log("");
+            console.log("");
+            console.log("");
+
+            for(let y = 0; y < 2; y++)
+            {
+                for(let x = 0; x < 2; x++)
+                {
+                    if(this.puyo_temp[y][x].toString() != 0)
+                    {
+                        puyo[y][x] = this.puyo_temp[y][x].toString();
+                    }
+                    else
+                    {
+                        puyo[y][x] = None;
+                    }
+                }
+            }
+
+
+            console.log(puyo[0][0] + " , " + puyo[0][1]);
+            console.log(puyo[1][0] + " , " + puyo[1][1]);
+
+
         }
         else if(keyIsDown(" ".charCodeAt(0)) == false)
         {
@@ -538,10 +599,13 @@ class Control
         {
             for(let x = 0; x < 2; x++)
             {
-                if(puyo[y][x] != 0)
+
+                if(puyo[y][x].toString() != None.toString())
                 {
+          //      console.log( x + " , "+ y + "       " + puyo[y][x]);
+
+
                     fill(puyo[y][x]);
-                
                     this.pos = new Vector(0,0);
                     
                     this.pos.x = (this.position.x * PUYO_SIZE) + (PUYO_SIZE * x);
@@ -553,7 +617,12 @@ class Control
                 }
             }
         }
+
+        //console.log("");
+        //console.log("");
     }
+
+
 }
 
 
@@ -566,8 +635,9 @@ class Game
 
     constructor()
     { 
-        this.control = new Control();
         this.stage = new Stage();
+
+        this.control = new Control();
     }
 
     Update()

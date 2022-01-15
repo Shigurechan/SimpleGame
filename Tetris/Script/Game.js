@@ -1,33 +1,32 @@
-const STAGE_WIDTH = 10;
-const STAGE_HEIGHT = 23;
+"use strict"
 
-const STAGE_OFFSET_WIDTH = 200;
-const STAGE_OFFSET_HEIGHT = 150;
+const STAGE_WIDTH = 12;
+const STAGE_HEIGHT = 21;
 
-const CELL = 30;
+const BLOCK_SIZE = 30;
+const BLOCK_HEIGHT = 4;
+const BLOCK_WIDTH = 4;
+
+const STAGE_OFFSET_WIDTH = 5;
+const STAGE_OFFSET_HEIGHT = 3;
+
+const BLOCK_COLOR = 2;
+
 const DONW_SPEED = 5;
 
-const PLAYER_START_POSITION_X = 3;
-const PLAYER_START_POSITION_Y = 3;
+const START_BLOCK_POSITION_X = 4;
+const START_BLOCK_POSITION_Y = 0;
 
-const LINE_DELETE_ANIMATION = 5;
-const LINE_ANIMATION_SPEED = 20;
+const BLICK_COUNT = 3;
 
-let keyRight = false;
-let keyLeft = false;
-let keyShift = false;
+const WALL = 1;
+const NONE = 0;
+const LINE = 10;
 
-let holdLeft = false;
-let holdRight = false;
-let holdShift = false;
-
-let animation = 0;      // アニメーション
-
-
-const ColorCode = [
+const colorCode = 
+[
       [0,0,0],          //背景
       [255,255,255],    //壁
-
       [0,255,255],      //水色
       [255,255,0],      //黄色    
       [0,128,0],        //緑    
@@ -36,8 +35,9 @@ const ColorCode = [
       [255,166,0],      //オレンジ
       [128,0,128],      //紫      
 ];
+
 //ブロック
-const Block = 
+const blockPattern = 
 [
             [
                   [1,1,1,1],
@@ -90,47 +90,6 @@ const Block =
 
 ];
 
-class Effect
-{
-      constructor(line)
-      {
-            this.line = line;
-            this.position = position;
-      }
-
-
-      Renderer()
-      {
-
-            fill(255,255,255);
-      
-            if(this.line.length == 1)
-            {
-                  textSize(CELL);
-                  text("シングル",STAGE_OFFSET_WIDTH  + CELL ,STAGE_OFFSET_HEIGHT + this.position.y * CELL);
-            }
-            else if(this.line.length == 2)
-            {
-                  text("ダブル",STAGE_OFFSET_WIDTH + CELL ,STAGE_OFFSET_HEIGHT + this.position.y * CELL);
-                  textSize(CELL * 2);
-            }
-            else if(this.line.length == 3)
-            {
-                  text("トリプル",STAGE_OFFSET_WIDTH  + CELL ,STAGE_OFFSET_HEIGHT + this.position.y * CELL);
-                  textSize(CELL * 3);
-            }
-            else if(this.line.length == 4)
-            {
-                  text("テトリス",STAGE_OFFSET_WIDTH + CELL ,STAGE_OFFSET_HEIGHT + this.position.y * CELL);
-                  textSize(CELL * 4);
-            }
-            
-
-
-      }
-
-
-}
 
 // ################################################################
 // # stage クラス
@@ -139,121 +98,43 @@ class Stage
 {
       constructor()
       {
-
-            this.effect = [];                   //ライン削除エフェクト
-            
-            this.nowEffect = false;             //エフェクト中かどうか？
-            this.deleteLine = false;            //削除するラインがあるかどうか？
-            this.maskLine = false;              //点滅するライン
-            this.isNext =  true;                //次のブロックを生成するかどうか？
-            this.deleteAnimation = 0;           //削除ラインの点滅回数
-            this.deleteNum = 0;                 //削除するラインの数
-
             //ステージ
             this.stage = 
             [
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,0,0,0,0,0,0,0,0,0,0,1],
+                  [1,1,1,1,1,1,1,1,1,1,1,1],
 
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,0,0,0,0,0,0,0,0,1],
-                  [1,1,1,1,1,1,1,1,1,1]
             ]
       }
 
-      // ################################ ラインを削除 ################################ 
-      LineDelete(y)
+
+      
+      // ################################ ブロックを設定 ################################ 
+      setBlock(block)
       {
-            let b = false;
-            for(let x = 1; x < STAGE_WIDTH - 1; x++)
-            {
-                  if(this.stage[y][x] > 1)
-                  {
-                        b = true;
-                  }
-                  else
-                  {
-                        b = false;
-                        break;
-                  }
-            }
-
-
-            if(b == true)
-            {
-                  for(let x = 1; x < STAGE_WIDTH - 1; x++)
-                  {
-                        this.stage[y][x] = 0;
-                  }
-            }
-
-            if(b == false)
-            {
-                  return false;
-            }
-            else
-            {
-                  return true;
-            }
-
             
       }
 
-      // ################################ GameOver判定 ################################ 
-      getGameOver()
-      {
-            for(let i = 1; i < STAGE_WIDTH - 1; i++)
-            {
-                  if(this.stage[3][i] > 1)
-                  {
-                        return true;
-                  }
-            }
 
-            return false;
-      }
-
-      // ################################ ラインを詰める ################################ 
-      LineShift()
-      {
-            for(let line = STAGE_HEIGHT - 1; line > 0; line--)
-            {
-                  if(this.LineDelete(line) == true)
-                  {
-                        for(let y = line; y > 0; y--)
-                        {
-                              for(let x = 1; x < STAGE_WIDTH - 1; x++)
-                              {
-                                    let t = this.stage[y - 1][x];
-
-                                    this.stage[y][x] = t;
-                                    this.stage[y - 1][x] = 0;
-                              }      
-                        }
-                        
-                        line = STAGE_HEIGHT - 1;
-                  }
-            }
-
-      }     
 
       // ################################ Update ################################ 
       Update()
@@ -264,412 +145,438 @@ class Stage
       // ################################ Renderer ################################ 
       Renderer()
       {
-            
-            for(let y = 3; y < this.stage.length; y++)
+            for(let y = 0; y < STAGE_HEIGHT; y++)      
             {
-                  for(let x = 0; x < this.stage[y].length; x++)
+                  for(let x = 0; x < STAGE_WIDTH; x++)      
                   {
-                        fill(ColorCode[ this.stage[y][x] ][0],ColorCode[ this.stage[y][x] ][1],ColorCode[ this.stage[y][x] ][2]);
-                        rect( STAGE_OFFSET_WIDTH + x * CELL,STAGE_OFFSET_HEIGHT + y * CELL,CELL,CELL);
-                  }                        
+                  
+                        fill(colorCode[this.stage[y][x]]);
+                        rect( (STAGE_OFFSET_WIDTH + x) * BLOCK_SIZE, (STAGE_OFFSET_HEIGHT + y) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE);
+                  
+                  }                 
             }
+      }
 
-            if(this.maskLine == true)
+      
+}
+
+// ################################################################
+// # 操作
+// ################################################################
+class Control
+{
+
+      // ################################ エフェクト ################################ 
+      Effect()
+      {
+            if( (this.clearLine.length > 0) && (this.isEffect == true) )
             {
-                  for(let y = 0; y < this.stage.length - 1; y++)
+
+                  this.blinkInterval_Time += deltaTime;
+                  if(this.blinkInterval_Time > this.blinkInterval)
                   {
-                        if(this.line[y] == true)
+                        this.isBlink = !this.isBlink;
+                        this.blinkInterval_Time = 0;
+
+                        this.blinkCount++;
+                        if(this.blinkCount > BLICK_COUNT)
                         {
-                              for(let x = 1; x < this.stage[y].length - 1; x++)
-                              {
-                                    fill(0,0,0);
-                                    rect( STAGE_OFFSET_WIDTH + (x * CELL),STAGE_OFFSET_HEIGHT + (y * CELL),CELL,CELL);
-                              }                              
+                              this.blinkCount = 0;
+                              this.isEffect = false;
+                              this.isNewBlock = true;
+                              this.isBlink = false;
+                              this.isShiftLine = true;
+                              this.setReset();
                         }
                   }
+
+
+            }
+            else
+            {
+                  this.isPutBlock = false;
             }
       }
 
+      // ################################ ライン 詰める ################################ 
+      ShiftLine(stage)
+      {
+            if(this.isShiftLine == true)
+            {
+                  console.log("ShiftLine()");
+                  let count = 0;
+                  for(let y = 0; y < STAGE_HEIGHT; y++)
+                  {
+                        count = 0;
+                        for(let x = 0; x < STAGE_WIDTH; x++)
+                        {
+                              if( (stage[y][x] != WALL) && (stage[y][x] != NONE) )
+                              {
+                                    count++;
+                              }
+                              else
+                              {
+
+                              }
+                        }
+
+                        if(count == LINE)
+                        {
+                              for(let x = 1; x < STAGE_WIDTH; x++)
+                              {
+                                    for(let yy = y; yy > 0; yy--)
+                                    {
+                                          stage[yy][x] = stage[yy - 1][x];
+
+                                    }
+                              }
+                        }
+                  }
+                  this.isShiftLine = false;
+            }
+
+            
+      }
+
       
-}
-
-
-// ################################ キーを押したとき ################################ 
-function keyPressed()
-{
-
-      if( (keyCode === LEFT_ARROW) && (holdLeft == false) )
+      // ################################ ライン削除 取得 ################################ 
+      ClearLine(stage)
       {
-            holdLeft = true;
-            keyLeft = true;
-      }
-      else if( (keyCode === RIGHT_ARROW) && (holdRight == false) )
-      {
-            holdRight = true;
-            keyRight = true;
-      }
-      else if( (keyCode === SHIFT) && (holdShift == false) )
-      {
-            holdShift = true;
-            keyShift = true;
-      }
-      else{
-            keyShift = false;
-            keyRight = false;
-            keyLeft = false;
-      }
-}
+            if(this.isPutBlock == true && this.isCearLine == false )
+            {
+                  for(let y = 0; y < STAGE_HEIGHT; y++)
+                  {
+                        let count = 0;
+                        let temp = new Array(0);
+                        for(let x = 1; x < STAGE_WIDTH; x++)
+                        {
+                              if( (stage[y][x] != WALL) && (stage[y][x] != NONE) )
+                              {
+                                    temp.push(new Vector(x,y));
+                                    count++;
+                              }
+                              else
+                              {
+                                    break;
+                              }
+                        }
 
-// ################################  キーを離したとき ################################ 
-function keyReleased()
-{
-      keyRight = false;
-      keyLeft = false;
+                        if(count == LINE)
+                        {
+                              this.clearLine.push(y);
+                        }
+                        
+                  }
+                  
 
-      holdRight = false;
-      holdLeft = false;
+                  if(this.clearLine.length > 0)
+                  {
+      //                  console.log(this.clearLine.length);
+                        this.isEffect = true;
+                        this.isCearLine = true;
 
-      holdShift = false;
-      keyShift= false;
-      
-}
+                  }
+                  else
+                  {
+                        this.isPutBlock == false;
+                        this.isNewBlock = true;
+                  }
 
-// ################################################################
-// # Player クラス
-// ################################################################
-class Player
-{
+
+            }
+
+            this.Effect();    //エフェクト
+      }
+
+
+      // ################################ コンストラクタ ################################ 
       constructor()
       {
-            this.position = new Vector(3,0);
-            this.put = true;
             
-            this.blockNumber = 0;
-            this.gameOver = false;
-            this.block = [4];
-            this.block[0] = [0,0,0,0];
-            this.block[1] = [0,0,0,0];
-            this.block[2] = [0,0,0,0];
-            this.block[3] = [0,0,0,0];
-            this.rotate = 0;
-            
-            this.KeyPrevLeft = false;
-            this.KeyPrevShift = false;
-            this.KeyPrevRight = false;
-            this.isPut = false;
-            this.isDown = false;
+            //現在のブロック
+            this.nowBlock = 
+            [
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0]
+            ];
 
-            this.Next();
+            this.blockNumber; 
+            this.position;
+            this.rightKey;
+            this.leftkey;
+
+
+            //落下
+            this.down = 0;
+            this.downTime = 80;    //落下速度
+            this.isDwon == false;
+
+            
+
+            this.isPutBlock = false;      //ブロックを置くかどうか？
+            this.isNewBlock = true;       //新しいブロックを出すかどうか？
+            this.isCearLine = false;      //詰めるラインを算出
+            this.isShiftLine = false;     //ラインを詰めるかどうか？
+
+
+            //ライン削除
+            this.clearLine = new Array(0);
+
+            //エフェクト
+            this.isEffect = false;
+            this.isBlink = false;
+            this.blinkInterval = 200;
+            this.blinkInterval_Time = 0;
+            this.blinkCount = 0;
+            this.nowDeleteLine = false;
+
+            this.rotate = 0;  //回転
+
+
+            //長押し
+            this.press = false;
+            this.pressSpace = false;
+
+            this.setReset();
       }
 
-
-
-      // ################################  次のブロックを生成 ################################ 
-      Next()                  
+      // ################################ ブロック生成 ################################ 
+      setReset()
       {
-            this.blockNumber = 0;
-            //this.blockNumber = GetRandom(0,6);
-            
-            for(let y = 0; y < 4; y++)
+            if( (this.isNewBlock == true) && (this.isEffect == false) )
             {
-                  for(let x = 0; x < 4; x++)
-                  {
-                        this.block[y][x] = 0;
-                  }
-            }
-               
+                  this.clearLine.length = 0;
+                  this.isCearLine = false;
+                  this.isEffect = false;
+                  this.isPutBlock = false;
+                  this.position = new Vector(START_BLOCK_POSITION_X,START_BLOCK_POSITION_Y);
+                  this.blockNumber = 3 - BLOCK_COLOR;
+                  //this.blockNumber = Math.floor(random(2,7)) - BLOCK_COLOR;
+                  
 
-            for(let y = 0; y < 4; y++)
-            {
-                  for(let x = 0; x < 4; x++)
+                  //ブロック クリア
+                  for(let y = 0; y < BLOCK_HEIGHT; y++)
                   {
-                        if(Block[this.blockNumber][y][x] == 1)
+                        for(let x = 0; x < BLOCK_WIDTH; x++)
                         {
-
-                              this.block[y][x] = 1;
+                              this.nowBlock[y][x] = 0;
                         }
                   }
-            }            
-      }
 
-      // ################################  キーボード入力 ################################ 
-      KeyBoard()
-      {
-            if(!this.KeyPrevLeft && keyLeft)
-            {
-                  this.position.x--;
-            }
-            else if(!this.KeyPrevRight && keyRight)
-            {
-                  this.position.x++;
-            }
-            else if(!this.KeyPrevShift && keyShift)
-            {
-
-                  this.rotate += 1;
-                  if(this.rotate > 3)
+                  //ブロック設定
+                  for(let y = 0; y < BLOCK_HEIGHT; y++)
                   {
-                        this.rotate = 0;
+                        for(let x = 0; x < BLOCK_WIDTH; x++)
+                        {
+                              this.nowBlock[y][x] = blockPattern[this.blockNumber][y][x];
+                        }
                   }
-
-                  this.Rotate();
+                  
+                  this.isNewBlock = false;
             }
 
-
-            this.KeyPrevLeft = keyLeft;
-            this.KeyPrevRight = keyRight;
-            this.KeyPrevShift = keyShift;
-
       }
+
+      // ################################ 移動 ################################ 
+      Move()
+      {
+            if (this.isPutBlock == false)
+            {
+                  if( keyIsDown(" ".charCodeAt(0)) && (this.pressSpace == false) )
+                  {
+      
+                        this.rotate += 1.0;
+                        if(this.rotate > 3.0)
+                        {
+                              this.rotate = 0.0;
+                        }
+                        
+                        this.Rotate();
+
+                        this.pressSpace = true;
+                  }
+                  else if(keyIsDown(" ".charCodeAt(0)) == false)
+                  {
+                        this.pressSpace = false;
+                  }
+      
+                  //左右移動
+                  if(keyIsDown(LEFT_ARROW) == true && (this.press == false && this.leftKey == false))
+                  {
+                        console.log("Left");                        
+
+                        this.leftKey = true;
+                        this.position.x += -1;
+                        this.press = true;
+                  }
+                  else if(keyIsDown(RIGHT_ARROW) && (this.press == false && this.rightKey == false))
+                  {
+                        console.log("Right");                        
+
+                        this.rightKey = true;
+
+                        this.position.x += 1;
+                        this.press = true;
+                  }
+      
+
+                  if( (keyIsDown(LEFT_ARROW) == false) && (keyIsDown(RIGHT_ARROW) == false) )
+                  {
+                        this.rightKey = false;
+                        this.leftKey = false;
+
+
+                        this.press = false;
+                  }
+                  
+            }
+      }
+
+      // ################################ ブロック　配置 ################################ 
+      PutBlock(stage)
+      {
+            if(this.isPutBlock == true)
+            {
+                  for(let y = 0; y < BLOCK_HEIGHT; y++)
+                  {
+                        for(let x = 0; x < BLOCK_WIDTH; x++)
+                        {
+                              if(this.nowBlock[y][x] != NONE)
+                              {
+                                    stage[this.position.y + y][this.position.x + x] = this.blockNumber + BLOCK_COLOR;
+                              }
+                        }
+                  }
+            
+                  //ブロック クリア
+                  for(let y = 0; y < BLOCK_HEIGHT; y++)
+                  {
+                        for(let x = 0; x < BLOCK_WIDTH; x++)
+                        {
+                              this.nowBlock[y][x] = NONE;
+                        }
+                  }
+            }
+      }
+
+      // ################################ 当たり判定 ################################ 
+      Collision(stage)
+      {      
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
+            {
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
+                  {     
+                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) && (this.rightKey == true) )                                                     
+                        {
+                              this.rightKey = false;
+                              this.position.x += -1;
+                        }
+                        else if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) && (this.leftKey == true) )                                                     
+                        {
+                              this.leftKey = false;
+                              this.position.x += +1;
+                        }
+
+                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) )                                                     
+                        {
+                              if(this.isPutBlock == false)
+                              {
+                                    this.position.y += -1;
+                                    this.isPutBlock = true;
+                              }
+                        }
+                  }     
+            }      
+      }
+
+
+      // ################################ 落下 ################################ 
+      Down()
+      {
+            this.down += deltaTime;
+
+            if(this.downTime < this.down )
+            {
+                  this.down = 0;
+
+                 if(this.isPutBlock == false)
+                 {
+                        this.position.y += 1;
+                        this.isDown = true;
+                 }
+            }
+      }
+
 
       // ################################ 回転 ################################ 
       Rotate()
       {
-            for(let y = 0; y < 4; y++)
-            {
-                  for(let x = 0; x < 4; x++)
-                  {
-                        this.block[y][x] = 0;
-                  }
-            }
+            
+            this.block_temp = 
+            [
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0],
+            ];
 
-
-            for(let y = 0; y < 4; y++)
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
             {
-                  for(let x = 0; x < 4; x++)
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
                   {
-                        if(Block[this.blockNumber][y][x] != 0)
+                        if(this.nowBlock[y][x] != NONE)
                         {
 
                               let xx = (cos(PI / 2 * this.rotate) * (x - 1.5)) + (-sin(PI / 2 * this.rotate) * (y - 1.5) );
-                              let yy = (sin(PI / 2 * this.rotate) * (x - 1.5)) + (cos(PI / 2 * this.rotate) * (y - 1.5) );
-                              this.block[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1;
+                              let yy = (sin(PI / 2 * this.rotate) * (x - 1.5)) + ( cos(PI / 2 * this.rotate) * (y - 1.5) );
+                              this.block_temp[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1;
                         }
                   }
             }
             
-            let b = false;
-            for(let x = 0; x< 4; x++)
-            {
-                  b = false;
-                  for(let y = 0; y < 4; y++)
-                  {
-                        if(this.block[y][0] == 0)
-                        {
-                              b = true;
-                        }
-                        else
-                        {
-                              b = false;
-                              break;
-                        }
-                  }
-                  
-                  if( b == true)
-                  {
-                        for(let i = 0; i< 4; i++)
-                        {
-                              for(let j = 0; j<= 2; j++)
-                              {
-                                    let t = this.block[i][j + 1];
-                                    this.block[i][j + 1] = 0;
-                                    this.block[i][j] = t;
-                              }
-                        }
-                  }
-                  else
-                  {
-                        break;
-                  }
-            }     
 
 
-            b = false;
-            for(let x = 0; x< 4; x++)
-            {
-                  b = false;
-                  for(let y = 0; y < 4; y++)
-                  {
-                        if(this.block[0][y] == 0)
-                        {
-                              b = true;
-                        }
-                        else
-                        {
-                              b = false;
-                              break;
-                        }
-                  }
-                  
-                  if( b == true)
-                  {
-                        for(let i = 0; i< 4; i++)
-                        {
-                              for(let j = 0; j<= 2; j++)
-                              {
-                                    let t = this.block[j + 1][i];
-                                    this.block[j + 1][i] = 0;
-                                    this.block[j][i] = t;
-                              }
-                        }
-                  }
-                  else
-                  {
-                        break;
-                  }
-            }     
+  
       }
 
       // ################################ 更新 ################################ 
       Update()
-      {            
-            this.KeyBoard();
-      }
-
-      UpdateStage(stage)
       {     
-
-      }
-      
-
-      // ################################ 当たり判定 ################################ 
-      Collision(stage)
-      {
-
-            if( (this.gameOver == false) && (this.isPut == false) )
-            {
-                  //左右の壁判定            
-                  if( (keyLeft == true) || (keyRight == true) )
-                  {
-                        for(let yy = 0; yy < 4; yy++)
-                        {
-                              for(let xx = 0; xx < 4; xx++)
-                              {            
-                                    if(this.block[yy][xx] == 1) 
-                                    {
-                                          if( stage.stage[this.position.y + yy ][this.position.x + xx] > 0 )
-                                          {                                          
-                                                if(keyLeft == true)
-                                                {
-                                                      this.position.x++;
-                                                }
-                                                else if(keyRight == true)
-                                                {
-                                                      this.position.x--;
-                                                }
-                                          }
-                                    }
-                              }
-                        }
-                  }
-
-                  //下との当たり判定
-                  if(this.isPut == false)
-                  {
-                        //ブロック落下
-                        if( (animation % DONW_SPEED) == 0 )
-                        {
-                              this.position.y++;
-                        }
-
-                        for(let yy = 0; yy < 4; yy++)
-                        {
-                              for(let xx = 0; xx < 4; xx++)
-                              {            
-                                    if(this.block[yy][xx] > 0)
-                                    {
-                                          if( stage.stage[this.position.y + yy ][this.position.x + xx] > 0)
-                                          {
-                                                this.position.y--;
-                                                this.isPut = true;
-                                          }
-                                    }
-
-
-                              }
-                        }
-                  }
-                  
-                  //　ブロック配置
-                  if(this.isPut == true)
-                  {
-                        for(let yy = 0; yy < 4; yy++)
-                        {
-                              for(let xx = 0; xx < 4; xx++)
-                              {            
-                                    if(this.block[yy][xx] == 1)
-                                    {                 
-                                          stage.stage[this.position.y + yy ][this.position.x + xx] = this.blockNumber + 2;
-                                    }                                    
-                              }
-                        }
-                  }
-            }
-
-
+            this.Down();
+            this.Move();
             
-
-            
-            //ブロックを置いた時
-            if(this.isPut == true)
-            {
-                  this.Next();
-                  stage.LineShift();
-
-                  if (stage.getGameOver() == true)
-                  {
-//                        console.log("GAME OVER");
-                        this.gameOver = true;
-                  }
-                  else
-                  {
-                        this.isPut = false;
-                  }
-
-                  this.position.x = PLAYER_START_POSITION_X;
-                  this.position.y = PLAYER_START_POSITION_Y;
-
-
-
-            }
-
+            this.setReset();
       }
 
 
 
 
 
-// ################################ レンダリング ################################ 
+      // ################################ レンダリング ################################ 
       Renderer()
       {
-            //ブロック
-            if(this.isPut == false)
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
             {
-                  for(let y = 0; y < 4; y++)
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
                   {
-                        for(let x = 0; x < 4; x++)
+                        if(blockPattern[this.blockNumber][y][x] != 0)
                         {
-                              if(this.block[y][x] != 0)
-                              {
-                                    fill(ColorCode[ this.blockNumber　+ 2 ][0],ColorCode[ this.blockNumber + 2 ][1],ColorCode[ this.blockNumber + 2 ][2]);
-                                    rect( (this.position.x * CELL) + STAGE_OFFSET_WIDTH + (x * CELL),(this.position.y * CELL) + STAGE_OFFSET_HEIGHT +(y * CELL),CELL,CELL);
-                              }
+                              fill(colorCode[this.blockNumber + 2]);
+                              rect( (this.position.x + x + STAGE_OFFSET_WIDTH) * BLOCK_SIZE,(this.position.y + y + STAGE_OFFSET_HEIGHT) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
                         }
-                  }                  
+                  }
             }
 
-            //ゲームーオーバー
-            if(this.gameOver == true)
+            if(this.isBlink == true)
             {
-                  
-                  fill(0,0,0);
-                  rect( (CANVAS_WIDTH / 2　- 100),(CANVAS_HEIGHT / 2) - 75,textWidth("GAME OVER"),75);
-                  fill(255,255,255);
-                  textSize(50);
-                  text("GAME OVER",(CANVAS_WIDTH / 2)　- 100,(CANVAS_HEIGHT / 2) - 25 );
-                  
+                  for(let i = 0; i < this.clearLine.length; i++)
+                  {
+                        fill(colorCode[NONE]); //背景    
+                        rect( (STAGE_OFFSET_WIDTH + 1) * BLOCK_SIZE,(STAGE_OFFSET_HEIGHT + this.clearLine[i]) * BLOCK_SIZE,(STAGE_WIDTH - 2 ) * BLOCK_SIZE,BLOCK_SIZE);
+                  }
             }
-                  
       }
 }
 
@@ -681,25 +588,18 @@ class Game
       constructor()
       {
             this.stage = new Stage();
-            this.player = new Player();
+            this.control = new Control();
       }
 
 
       Update()
       {
-
-            this.player.Update();
             this.stage.Update();
-
-            this.player.Collision(this.stage);
-
-
-            animation++;
-            if(animation > 60)
-            {
-                  animation = 0;
-            }
-
+            this.control.Update();
+            this.control.Collision(this.stage.stage);
+            this.control.PutBlock(this.stage.stage);
+            this.control.ClearLine(this.stage.stage);
+            this.control.ShiftLine(this.stage.stage);
             
 
       }
@@ -707,7 +607,11 @@ class Game
       Renderer()
       {
             this.stage.Renderer();
-            this.player.Renderer();
+            this.control.Renderer();
+
+            fill(0,255,0);
+            rect( (1 + STAGE_OFFSET_WIDTH) * BLOCK_SIZE,(19 + STAGE_OFFSET_HEIGHT) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
+            rect( (2 + STAGE_OFFSET_WIDTH) * BLOCK_SIZE,(20 + STAGE_OFFSET_HEIGHT) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
 
 
       }

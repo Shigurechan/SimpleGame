@@ -1,5 +1,6 @@
+new p5();
 
-const  game = new Game();   //基底ループ
+let game =  new Game();   //基底ループ
 
 //初期化
 function setup()
