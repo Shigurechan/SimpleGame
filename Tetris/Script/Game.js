@@ -23,15 +23,48 @@ const WALL = 1;
 const NONE = 0;
 const LINE = 10;
 
+const DOWN_INTERVAL = 300;          //落下間隔
+const PUT_INTERVAL = 1000;          //接地してから配置までの時間
+const BLINKING_INTERVAL = 300;      //点滅時間
+
+// MINO PATTERN
+const MINO_I = 0;
+const MINO_O = 1;
+const MINO_S = 2;
+const MINO_Z = 3;
+const MINO_J = 4;
+const MINO_L = 5;
+const MINO_T = 6;
+
+
+
+const wallKickTable_I = 
+[
+      [new Vector(-2,0),new Vector(1,0),new Vector(-2,1),new Vector(1,-2)],   // 0 -> 1
+      [new Vector(-1,0),new Vector(2,0),new Vector(-1,-2),new Vector(2,1)],   // 1 -> 2
+      [new Vector(2,0),new Vector(-1,0),new Vector(2,-1),new Vector(-1,2)],   // 2 -> 3
+      [new Vector(1,0),new Vector(-2,0),new Vector(1,-2),new Vector(-2,-1)],  // 3 -> 0
+];
+
+const wallKickTable = 
+[
+      [new Vector(-1,0),new Vector(-1,-1),new Vector(0,2),new Vector(-1,2)],        // 0 -> 1
+      [new Vector(1,0),new Vector(1,1),new Vector(0,-2),new Vector(1,-2)],         // 1 -> 2
+      [new Vector(1,0),new Vector(1,-1),new Vector(0,2),new Vector(1,2)],           // 2 -> 3
+      [new Vector(-1,0),new Vector(-1,1),new Vector(0,-2),new Vector(-1,-2)],       // 3 -> 0
+
+];
+
 const colorCode = 
 [
       [0,0,0],          //背景
       [255,255,255],    //壁
+
       [0,255,255],      //水色
       [255,255,0],      //黄色    
       [0,128,0],        //緑    
       [255,0,0],        //赤
-      [0,0,166],        //ネイビー
+      [0,0,166],        //青
       [255,166,0],      //オレンジ
       [128,0,128],      //紫      
 ];
@@ -40,13 +73,15 @@ const colorCode =
 const blockPattern = 
 [
             [
+                  //I
+                  [0,0,0,0],
                   [1,1,1,1],
                   [0,0,0,0],
                   [0,0,0,0],
-                  [0,0,0,0],
             ],
 
             [
+                  //O
                   [1,1,0,0],
                   [1,1,0,0],
                   [0,0,0,0],
@@ -54,13 +89,15 @@ const blockPattern =
             ],
 
             [
+                  //S
                   [0,1,1,0],
                   [1,1,0,0],
                   [0,0,0,0],
                   [0,0,0,0],
             ],
 
-            [
+            [   
+                  //Z
                   [1,1,0,0],
                   [0,1,1,0],
                   [0,0,0,0],
@@ -68,20 +105,23 @@ const blockPattern =
             ],
 
             [
+                  //J
                   [1,0,0,0],
-                  [1,1,1,1],
+                  [1,1,1,0],
                   [0,0,0,0],
                   [0,0,0,0],
             ],
 
             [
-                  [0,0,0,1],
-                  [1,1,1,1],
+                  //L
+                  [0,0,1,0],
+                  [1,1,1,0],
                   [0,0,0,0],
                   [0,0,0,0],
             ],
 
             [
+                  //T
                   [0,1,0,0],
                   [1,1,1,0],
                   [0,0,0,0],
@@ -122,7 +162,9 @@ class Stage
                   [1,0,0,0,0,0,0,0,0,0,0,1],
                   [1,0,0,0,0,0,0,0,0,0,0,1],
                   [1,1,1,1,1,1,1,1,1,1,1,1],
-
+                  [1,1,1,1,1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1,1,1,1,1],
             ]
       }
 
@@ -148,11 +190,9 @@ class Stage
             for(let y = 0; y < STAGE_HEIGHT; y++)      
             {
                   for(let x = 0; x < STAGE_WIDTH; x++)      
-                  {
-                  
+                  {                 
                         fill(colorCode[this.stage[y][x]]);
-                        rect( (STAGE_OFFSET_WIDTH + x) * BLOCK_SIZE, (STAGE_OFFSET_HEIGHT + y) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE);
-                  
+                        rect( (STAGE_OFFSET_WIDTH + x) * BLOCK_SIZE, (STAGE_OFFSET_HEIGHT + y) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
                   }                 
             }
       }
@@ -172,11 +212,11 @@ class Control
             if( (this.clearLine.length > 0) && (this.isEffect == true) )
             {
 
-                  this.blinkInterval_Time += deltaTime;
-                  if(this.blinkInterval_Time > this.blinkInterval)
+                  this.blink_Time += deltaTime;
+                  if(this.blink_Time > BLINKING_INTERVAL)
                   {
                         this.isBlink = !this.isBlink;
-                        this.blinkInterval_Time = 0;
+                        this.blink_Time = 0;
 
                         this.blinkCount++;
                         if(this.blinkCount > BLICK_COUNT)
@@ -189,8 +229,6 @@ class Control
                               this.setReset();
                         }
                   }
-
-
             }
             else
             {
@@ -203,7 +241,6 @@ class Control
       {
             if(this.isShiftLine == true)
             {
-                  console.log("ShiftLine()");
                   let count = 0;
                   for(let y = 0; y < STAGE_HEIGHT; y++)
                   {
@@ -213,10 +250,6 @@ class Control
                               if( (stage[y][x] != WALL) && (stage[y][x] != NONE) )
                               {
                                     count++;
-                              }
-                              else
-                              {
-
                               }
                         }
 
@@ -232,13 +265,10 @@ class Control
                               }
                         }
                   }
+
                   this.isShiftLine = false;
             }
-
-            
-      }
-
-      
+      }      
       // ################################ ライン削除 取得 ################################ 
       ClearLine(stage)
       {
@@ -268,21 +298,16 @@ class Control
                         
                   }
                   
-
                   if(this.clearLine.length > 0)
                   {
-      //                  console.log(this.clearLine.length);
                         this.isEffect = true;
                         this.isCearLine = true;
-
                   }
                   else
                   {
                         this.isPutBlock == false;
                         this.isNewBlock = true;
                   }
-
-
             }
 
             this.Effect();    //エフェクト
@@ -291,9 +316,8 @@ class Control
 
       // ################################ コンストラクタ ################################ 
       constructor()
-      {
-            
-            //現在のブロック
+      {            
+            /* ########## 現在　ブロック ########## */
             this.nowBlock = 
             [
                   [0,0,0,0],
@@ -302,44 +326,43 @@ class Control
                   [0,0,0,0]
             ];
 
+            /* ########## ブロック ########## */
             this.blockNumber; 
             this.position;
-            this.rightKey;
-            this.leftkey;
-
-
-            //落下
-            this.down = 0;
-            this.downTime = 80;    //落下速度
-            this.isDwon == false;
-
             
+            /* ########## 落下 ########## */
+            this.down_Time = 0;
+            this.downHit = false;
+            this.put_Time = 0;
 
+            /* ########## 削除ライン ########## */
             this.isPutBlock = false;      //ブロックを置くかどうか？
             this.isNewBlock = true;       //新しいブロックを出すかどうか？
-            this.isCearLine = false;      //詰めるラインを算出
+            this.isCearLine = false;      //詰めるラインを算出するかどか？
             this.isShiftLine = false;     //ラインを詰めるかどうか？
 
+            /* ########## 入力  ########## */
+            this.isPushSpaceKey = false;
+            this.isHoldSpaceKey = false;
+            this.isPushRightKey = false;
+            this.isHoldRightKey = false;
+            this.isPushLeftKey = false;
+            this.isHoldLeftKey = false;                        
 
-            //ライン削除
-            this.clearLine = new Array(0);
-
-            //エフェクト
+            /* ########## エフェクト ########## */
             this.isEffect = false;
             this.isBlink = false;
-            this.blinkInterval = 200;
-            this.blinkInterval_Time = 0;
+            this.blink_Time = 0;
             this.blinkCount = 0;
             this.nowDeleteLine = false;
+            this.clearLine = [];      //削除ライン
 
-            this.rotate = 0;  //回転
 
+            /* ########## 回転 ########## */
+            this.rotate = 0;
+            this.isRotate = false;
 
-            //長押し
-            this.press = false;
-            this.pressSpace = false;
-
-            this.setReset();
+            this.setReset();  //ブロック生成
       }
 
       // ################################ ブロック生成 ################################ 
@@ -347,14 +370,16 @@ class Control
       {
             if( (this.isNewBlock == true) && (this.isEffect == false) )
             {
+                  this.rotate = 0;
                   this.clearLine.length = 0;
                   this.isCearLine = false;
                   this.isEffect = false;
                   this.isPutBlock = false;
                   this.position = new Vector(START_BLOCK_POSITION_X,START_BLOCK_POSITION_Y);
-                  this.blockNumber = 3 - BLOCK_COLOR;
+                  this.blockNumber = 4 - BLOCK_COLOR;
                   //this.blockNumber = Math.floor(random(2,7)) - BLOCK_COLOR;
                   
+
 
                   //ブロック クリア
                   for(let y = 0; y < BLOCK_HEIGHT; y++)
@@ -384,52 +409,56 @@ class Control
       {
             if (this.isPutBlock == false)
             {
-                  if( keyIsDown(" ".charCodeAt(0)) && (this.pressSpace == false) )
+                  this.isPushSpaceKey = keyIsDown(" ".charCodeAt(0)); 
+                  if( (this.isPushSpaceKey == true) && (this.isHoldSpaceKey == false))
                   {
-      
-                        this.rotate += 1.0;
-                        if(this.rotate > 3.0)
+                        //ミノがI,Oじゃない時
+                        if( this.blockNumber != MINO_O )
                         {
-                              this.rotate = 0.0;
+                              this.rotate += 1;
+                              
+                              if(this.rotate > 3)
+                              {
+                                    this.rotate = 0;
+                              }                       
+                              
+                              this.Rotate();    //回転
                         }
-                        
-                        this.Rotate();
+                        else
+                        {
+                              this.rotate = 0;
+                        }
 
-                        this.pressSpace = true;
+                        this.isRotate = true;                        
+                        this.isHoldSpaceKey = true;
                   }
-                  else if(keyIsDown(" ".charCodeAt(0)) == false)
+                  else if(this.isPushSpaceKey == false)
                   {
-                        this.pressSpace = false;
+                        this.isHoldSpaceKey = false;
                   }
-      
+
+
                   //左右移動
-                  if(keyIsDown(LEFT_ARROW) == true && (this.press == false && this.leftKey == false))
-                  {
-                        console.log("Left");                        
+                  this.isPushLeftKey = keyIsDown(LEFT_ARROW);
+                  this.isPushRightKey = keyIsDown(RIGHT_ARROW);
 
-                        this.leftKey = true;
+                  if( (this.isPushLeftKey == true) && (this.isHoldLeftKey == false) )
+                  {
                         this.position.x += -1;
-                        this.press = true;
+                        this.isHoldLeftKey = true;
                   }
-                  else if(keyIsDown(RIGHT_ARROW) && (this.press == false && this.rightKey == false))
+                  else if( (this.isPushRightKey == true) && (this.isHoldRightKey == false) )
                   {
-                        console.log("Right");                        
-
-                        this.rightKey = true;
-
                         this.position.x += 1;
-                        this.press = true;
+                        this.isHoldRightKey = true;
+
                   }
-      
-
-                  if( (keyIsDown(LEFT_ARROW) == false) && (keyIsDown(RIGHT_ARROW) == false) )
-                  {
-                        this.rightKey = false;
-                        this.leftKey = false;
-
-
-                        this.press = false;
+                  else if( (this.isPushLeftKey == false) && (this.isPushRightKey == false) )
+                  {     
+                        this.isHoldRightKey = false;
+                        this.isHoldLeftKey = false;
                   }
+
                   
             }
       }
@@ -437,7 +466,7 @@ class Control
       // ################################ ブロック　配置 ################################ 
       PutBlock(stage)
       {
-            if(this.isPutBlock == true)
+            if( this.isPutBlock == true )
             {
                   for(let y = 0; y < BLOCK_HEIGHT; y++)
                   {
@@ -460,53 +489,168 @@ class Control
                   }
             }
       }
+      
+      // ################################ 回転したときの当たり判定 ################################ 
+      WallKick(stage)
+      {
+            this.flag = false;
+            this.isFrist = true;
+
+            this.r = 0;
+            if(this.rotate == 0)
+            {
+                  this.r = 3;
+            }
+            else
+            {
+                  this.r = this.rotate - 1;
+            }
+
+            for(let i = -1; i < wallKickTable_I[this.r].length; i++)
+            {                  
+                  this.pos = new Vector(this.position.x,this.position.y);
+                  if(this.isFrist == false)
+                  {
+                        if(this.blockNumber == MINO_I)
+                        {        
+                              this.pos.x += wallKickTable_I[this.r][i].x;
+                              this.pos.y += wallKickTable_I[this.r][i].y;
+                        }
+                        else
+                        {
+                              this.pos.x += wallKickTable[this.r][i].x;
+                              this.pos.y += wallKickTable[this.r][i].y;
+                        }
+                  }
+
+                  this.isFrist = false;
+                  this.flag = false;
+
+                  for(let y = 0; y < BLOCK_HEIGHT; y++)
+                  {
+                        for(let x = 0; x < BLOCK_WIDTH; x++)
+                        {
+                              if( (stage[this.pos.y + y][this.pos.x + x] != NONE) && (this.nowBlock[y][x] != NONE) )
+                              {
+                                    this.flag = true;
+                              }                             
+                        }
+                  }
+
+                  if(this.flag == false)
+                  {
+                        this.position = new Vector(this.pos.x,this.pos.y);
+                        return true;
+
+                  }                  
+            }            
+
+            return false;
+      }
+
+
+      // ################################ 落下　当たり判定 ################################ 
+      /*
+            NOTE
+
+            重なったかどうか？
+      */
+      DownCollision(stage)
+      {
+            //落下判定
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
+            {                  
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
+                  {
+                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y + 1][this.position.x + x] != NONE) )                                                     
+                        {
+                              if(this.isPutBlock == false)
+                              {
+                                    return true;
+                              }
+                        }
+                  }
+            }            
+
+            return false;
+      }
+
+      
+      
 
       // ################################ 当たり判定 ################################ 
       Collision(stage)
-      {      
+      {     
+            this.Down();
+            
+            if ( this.DownCollision(stage) == true)
+            {
+                  this.put_Time += deltaTime;
+                  this.downHit = true;
+            }
+            else
+            {
+                  this.downHit = false;
+            }
+
+      
+
+            if(this.put_Time > PUT_INTERVAL)
+            {
+                  if(this.downHit == true)
+                  {
+                        this.downHit = false;
+                        
+                        this.put_Time = 0;
+                        this.isPutBlock = true;
+                  }
+            }
+            
+
+            //移動
             for(let y = 0; y < BLOCK_HEIGHT; y++)
             {
                   for(let x = 0; x < BLOCK_WIDTH; x++)
                   {     
-                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) && (this.rightKey == true) )                                                     
+                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) && (this.isPushRightKey == true) )                                                     
                         {
-                              this.rightKey = false;
+                              this.isPushRightKey = false;
                               this.position.x += -1;
                         }
-                        else if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) && (this.leftKey == true) )                                                     
+                        else if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) && (this.isPushLeftKey == true) )                                                     
                         {
-                              this.leftKey = false;
+                              this.isPushLeftKey = false;
                               this.position.x += +1;
                         }
 
-                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y][this.position.x + x] != NONE) )                                                     
+                        if( this.isRotate == true )
                         {
-                              if(this.isPutBlock == false)
+                              if ( this.WallKick(stage) == false)
                               {
-                                    this.position.y += -1;
-                                    this.isPutBlock = true;
+
+                                    this.rotate = this.rotate - 1;
+                                    this.Rotate();
                               }
-                        }
+
+                              this.isRotate = false; 
+                        }                        
                   }     
-            }      
-      }
+            }
 
-
+      }      
       // ################################ 落下 ################################ 
       Down()
       {
-            this.down += deltaTime;
-
-            if(this.downTime < this.down )
+            this.down_Time += deltaTime;
+            if( this.down_Time  > DOWN_INTERVAL )
             {
-                  this.down = 0;
+                  this.down_Time = 0;
+                  this.position.y += 1;
 
-                 if(this.isPutBlock == false)
-                 {
-                        this.position.y += 1;
-                        this.isDown = true;
-                 }
+                  return true;
             }
+
+            return false;            
       }
 
 
@@ -522,17 +666,71 @@ class Control
                   [0,0,0,0],
             ];
 
+
             for(let y = 0; y < BLOCK_HEIGHT; y++)
             {
                   for(let x = 0; x < BLOCK_WIDTH; x++)
                   {
-                        if(this.nowBlock[y][x] != NONE)
+                        if(blockPattern[this.blockNumber][y][x] != NONE)
                         {
+                              if(this.blockNumber == MINO_I)     // I
+                              {
+                                    let xx = (cos(PI / 2 * this.rotate) * (x - 1.5)) + (-sin(PI / 2 * this.rotate) * (y - 1.5) );
+                                    let yy = (sin(PI / 2 * this.rotate) * (x - 1.5)) + ( cos(PI / 2 * this.rotate) * (y - 1.5) );
 
-                              let xx = (cos(PI / 2 * this.rotate) * (x - 1.5)) + (-sin(PI / 2 * this.rotate) * (y - 1.5) );
-                              let yy = (sin(PI / 2 * this.rotate) * (x - 1.5)) + ( cos(PI / 2 * this.rotate) * (y - 1.5) );
-                              this.block_temp[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1;
+                                    if(this.rotate == 3)
+                                    {
+                                          //this.block_temp[Math.round(yy + 1.5)][Math.round((xx + 1.5)) - 1] = 1; 
+                                    }
+                                    else if(this.rotate == 0)
+                                    {
+                                    }
+
+                                    this.block_temp[Math.round(yy + 1.5)][Math.round((xx + 1.5))] = 1; 
+
+                              }
+                              else if (this.blockNumber == 1)     // O
+                              {
+                                    /*
+                                    NOTE
+                                          回転しない。
+                                    */
+                              }                              
+                              else
+                              {
+                                    let xx = (cos(PI / 2 * this.rotate) * (x - 1)) + (-sin(PI / 2 * this.rotate) * (y - 1) );
+                                    let yy = (sin(PI / 2 * this.rotate) * (x - 1)) + ( cos(PI / 2 * this.rotate) * (y - 1) );
+
+                                    this.block_temp[Math.round(yy + 1)][Math.round((xx + 1))] = 1; 
+                              }
                         }
+                  }
+            }
+
+            /*
+            console.log(this.block_temp[0][0] + " , " + this.block_temp[0][1]  + " , " + this.block_temp[0][2]  +" , " + this.block_temp[0][3]);
+            console.log(this.block_temp[1][0] + " , " + this.block_temp[1][1]  + " , " + this.block_temp[1][2]  +" , " + this.block_temp[1][3]);
+            console.log(this.block_temp[2][0] + " , " + this.block_temp[2][1]  + " , " + this.block_temp[2][2]  +" , " + this.block_temp[2][3]);
+            console.log(this.block_temp[3][0] + " , " + this.block_temp[3][1]  + " , " + this.block_temp[3][2]  +" , " + this.block_temp[3][3]);
+            console.log("");
+            console.log("");
+            console.log("");
+            */
+
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
+            {
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
+                  {
+                        this.nowBlock[y][x] = NONE;
+                  }
+            }
+            
+
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
+            {
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
+                  {
+                        this.nowBlock[y][x] = this.block_temp[y][x];
                   }
             }
             
@@ -544,7 +742,7 @@ class Control
       // ################################ 更新 ################################ 
       Update()
       {     
-            this.Down();
+           
             this.Move();
             
             this.setReset();
@@ -561,7 +759,7 @@ class Control
             {
                   for(let x = 0; x < BLOCK_WIDTH; x++)
                   {
-                        if(blockPattern[this.blockNumber][y][x] != 0)
+                        if(this.nowBlock[y][x] != NONE)
                         {
                               fill(colorCode[this.blockNumber + 2]);
                               rect( (this.position.x + x + STAGE_OFFSET_WIDTH) * BLOCK_SIZE,(this.position.y + y + STAGE_OFFSET_HEIGHT) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
@@ -591,7 +789,6 @@ class Game
             this.control = new Control();
       }
 
-
       Update()
       {
             this.stage.Update();
@@ -600,20 +797,12 @@ class Game
             this.control.PutBlock(this.stage.stage);
             this.control.ClearLine(this.stage.stage);
             this.control.ShiftLine(this.stage.stage);
-            
-
       }
 
       Renderer()
       {
             this.stage.Renderer();
             this.control.Renderer();
-
-            fill(0,255,0);
-            rect( (1 + STAGE_OFFSET_WIDTH) * BLOCK_SIZE,(19 + STAGE_OFFSET_HEIGHT) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
-            rect( (2 + STAGE_OFFSET_WIDTH) * BLOCK_SIZE,(20 + STAGE_OFFSET_HEIGHT) * BLOCK_SIZE,BLOCK_SIZE,BLOCK_SIZE );
-
-
       }
 }
 
