@@ -37,6 +37,13 @@ const MINO_L = 5;
 const MINO_T = 6;
 
 
+//エフェクト
+const COLOR_WAVE_MIN = 0.004;   
+const COLOR_WAVE_START = 80.0;
+const WAVE_SPEED = PI / 50.0;
+
+const FONT_SIZE = 30;
+
 
 const wallKickTable_I = 
 [
@@ -314,6 +321,10 @@ class Control
       }
 
 
+      
+
+
+
       // ################################ コンストラクタ ################################ 
       constructor()
       {            
@@ -326,8 +337,21 @@ class Control
                   [0,0,0,0]
             ];
 
+      
+                   
+            /* ########## 次の　ブロック ########## */
+            this.nextBlock = 
+            [
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0]
+            ];
+
             /* ########## ブロック ########## */
-            this.blockNumber; 
+            this.blockNumber;                                                       //現在のブロック
+//            this.nextBlockNumber = Math.floor(random(2,7)) - BLOCK_COLOR;           //次のブロック
+            this.nextBlockNumber = 3 - BLOCK_COLOR;           //次のブロック
             this.position;
             
             /* ########## 落下 ########## */
@@ -356,7 +380,7 @@ class Control
             this.blinkCount = 0;
             this.nowDeleteLine = false;
             this.clearLine = [];      //削除ライン
-
+            this.colorWave = COLOR_WAVE_START;
 
             /* ########## 回転 ########## */
             this.rotate = 0;
@@ -376,8 +400,12 @@ class Control
                   this.isEffect = false;
                   this.isPutBlock = false;
                   this.position = new Vector(START_BLOCK_POSITION_X,START_BLOCK_POSITION_Y);
-                  this.blockNumber = 4 - BLOCK_COLOR;
-                  //this.blockNumber = Math.floor(random(2,7)) - BLOCK_COLOR;
+                  this.blockNumber = this.nextBlockNumber;
+                  //this.nextBlockNumber = Math.floor(random(2,7)) - BLOCK_COLOR;
+                  this.nextBlockNumber = 3 - BLOCK_COLOR;
+
+
+//                  this.blockNumber = Math.floor(random(2,7)) - BLOCK_COLOR;
                   
 
 
@@ -490,6 +518,275 @@ class Control
             }
       }
       
+      // ################################ 4 連続ライン 判定 ################################ 
+      GetIsTetris()
+      {
+            if(this.clearLine.length != 0)
+            {
+                  let t = 0;
+                  let result = 0;
+                  let isFirst = true;
+                  for(let i = 0; i< this.clearLine.length; i++)
+                  {
+                        if(isFirst == true)
+                        {
+                              result++;
+                              t = this.clearLine[i];
+                              isFirst = false;
+                        }
+                        else
+                        {
+                              t++;
+                              if(t != this.clearLine[i] )
+                              {
+                                    return false;
+                              }
+                              else
+                              {
+                                    result++;
+
+                                    if(result == 4)
+                                    {
+                                          return true;
+                                    }
+                              }
+                        }
+                  }            
+            }
+
+            console.assert(false,"GetIsTetris()");
+      }
+
+
+      
+      // ################################ 3 連続ライン 判定 ################################ 
+      GetIsTriple()
+      {
+            if(this.clearLine.length != 0)
+            {
+                  let t = 0;
+                  let result = 0;
+                  let isFirst = true;
+                  for(let i = 0; i< this.clearLine.length; i++)
+                  {
+                        if(isFirst == true)
+                        {
+                              result++;
+                              t = this.clearLine[i];
+                              isFirst = false;
+                        }
+                        else
+                        {
+                              t++;
+                              if(t != this.clearLine[i] )
+                              {
+                                    return false;
+                              }
+                              else
+                              {
+                                    result++;
+
+                                    if ( result == 3 )
+                                    {
+                                          return true;
+                                    }
+                               
+                              }
+                        }
+                  }            
+
+                  return false;
+            }
+
+            console.assert(false,"GetIsTriple()");
+      }
+
+      
+      // ################################ 2 連続ライン 判定 ################################ 
+      GetIsDouble()
+      {
+            if(this.clearLine.length != 0)
+            {
+                  let t = 0;
+                  let result = 0;
+                  let isFirst = true;
+                  for(let i = 0; i< this.clearLine.length; i++)
+                  {
+                        if(isFirst == true)
+                        {
+                              result++;
+                              t = this.clearLine[i];
+                              isFirst = false;
+                        }
+                        else
+                        {
+                              t++;
+                              if(t != this.clearLine[i] )
+                              {
+                                    return false;
+                              }
+                              else
+                              {
+                                    result++;
+
+                                    if ( result == 2 )
+                                    {
+                                          return true;
+                                    }
+
+                              }
+                        }
+                  }            
+            }
+
+            console.assert(false,"GetIsDouble()");
+      }
+
+      
+      // ################################ 1 連続ライン 判定 ################################ 
+      GetIsSingle()
+      {
+            if(this.clearLine.length != 0)
+            {
+                  let t = 0;
+                  let result = 0;
+                  let isFirst = true;
+                  let flag =  false;
+                  let single = 0;
+                  for(let i = 0; i< this.clearLine.length; i++)
+                  {
+                        if(isFirst == true)
+                        {
+                              result++;
+                              t = this.clearLine[i];
+                              flag == true;
+                        }
+                        else
+                        {
+                              t++;
+                              if(t != this.clearLine[i] )
+                              {
+                                    flag = false;
+                              }
+                              else
+                              {
+                                    if((isFirst != true) && (flag == false) )
+                                    {
+                                          single++;
+                                    }
+
+                                    flag = true;
+                              }
+
+                              isFirst = false;
+
+                        }
+                  }
+                  
+                  return single;
+            }
+
+            console.assert(false,"GetIsSingle()");
+      }
+
+
+
+      // ################################ sin波グラデーション ################################ 
+      Sin_Wave()
+      {       
+            this.colorWave += WAVE_SPEED;            
+            if(this.colorWave > ( PI - (COLOR_WAVE_MIN * COLOR_WAVE_START) ))
+            {
+                  this.colorWave = COLOR_WAVE_MIN * COLOR_WAVE_START;
+            }
+      }
+      
+      // ################################ 消したライン 文字列で表示 ################################ 
+      Draw_LineString()
+      {
+            let string = [];
+            if(this.clearLine.length != 0)
+            {
+                  let combo = 0;
+                 
+
+                  if(this.GetIsTetris == true)
+                  {
+                        combo++;
+                        string.push("TETRIS");
+                  }
+                  else 
+                  {
+
+                        if(this.GetIsTriple() == true)
+                        {
+                              string.push("TRIPLE");
+
+                              combo++;
+                              if(this.GetIsSingle() == true)
+                              {
+                                    combo++;
+                                    string.push("SINGLE");
+                              }
+                              
+                        }
+                        else if(this.GetIsDouble() == true)
+                        {
+                              combo++;
+                              string.push("DOUBLE");
+
+                              if(this.GetIsSingle() == true)
+                              {
+                                    combo++;
+                                    string.push("SINGLE");
+                              }
+                        }
+                        else
+                        {
+                              combo += this.GetIsSingle();
+
+                              if ( combo == 1)
+                              {
+                                    string.push("SINGLE");
+                              }
+                              else if ( combo == 2)
+                              {
+                                    string.push("SINGLE");
+                                    string.push("SINGLE");
+                              }
+                              
+
+                              if(this.GetIsSingle() != 0)
+                              {
+                                    if(this.GetIsDouble() == true )
+                                    {
+                                          combo++;
+                                          string.push("DOUBLE");
+
+                                    }
+                                    
+                              }
+                        }
+                  }
+
+            }
+            
+
+            if(this.clearLine.length != 0)
+            {
+
+                  this.Sin_Wave();
+                  textSize(FONT_SIZE);
+                  textFont("PressStart2P");      
+                  fill(0,sin(this.colorWave) * 255,sin(this.colorWave) * 255);
+                  for(let i = 0; i < string.length; i++)
+                  {
+                        text(string[i], (STAGE_OFFSET_WIDTH + ((STAGE_WIDTH - 2) / 2 - 2 ))  * BLOCK_SIZE, ((STAGE_OFFSET_HEIGHT + (STAGE_HEIGHT) + 1) + i) * BLOCK_SIZE,BLOCK_SIZE * 6,BLOCK_SIZE + 1);
+                  }
+            }
+            
+      }
+
       // ################################ 回転したときの当たり判定 ################################ 
       WallKick(stage)
       {
@@ -562,50 +859,44 @@ class Control
             {                  
                   for(let x = 0; x < BLOCK_WIDTH; x++)
                   {
-                        if( (this.nowBlock[y][x] != NONE) && (stage[this.position.y + y + 1][this.position.x + x] != NONE) )                                                     
+                        if( (this.nowBlock[y][x] != NONE))                                                     
                         {
-                              if(this.isPutBlock == false)
+                              if(this.isPutBlock == false && (stage[this.position.y + y][this.position.x + x] != NONE) )
                               {
                                     return true;
                               }
                         }
                   }
             }            
-
             return false;
       }
 
       
+      NextDownCollision(stage)
+      {
+            //落下判定
+            for(let y = 0; y < BLOCK_HEIGHT; y++)
+            {                  
+                  for(let x = 0; x < BLOCK_WIDTH; x++)
+                  {
+                        if( (this.nowBlock[y][x] != NONE))                                                     
+                        {
+                              if(this.isPutBlock == false && (stage[this.position.y + y + 1][this.position.x + x] != NONE) )
+                              {
+                                    return true;
+                              }
+                        }
+                  }
+            }            
+            return false;
+      }
       
 
       // ################################ 当たり判定 ################################ 
       Collision(stage)
       {     
             this.Down();
-            
-            if ( this.DownCollision(stage) == true)
-            {
-                  this.put_Time += deltaTime;
-                  this.downHit = true;
-            }
-            else
-            {
-                  this.downHit = false;
-            }
-
-      
-
-            if(this.put_Time > PUT_INTERVAL)
-            {
-                  if(this.downHit == true)
-                  {
-                        this.downHit = false;
-                        
-                        this.put_Time = 0;
-                        this.isPutBlock = true;
-                  }
-            }
-            
+ 
 
             //移動
             for(let y = 0; y < BLOCK_HEIGHT; y++)
@@ -637,6 +928,38 @@ class Control
                   }     
             }
 
+
+            
+            if(this.NextDownCollision(stage) == true)
+            {
+                  this.downHit = true;
+                  this.put_Time += deltaTime;
+            }
+            else
+            {
+                  this.donwHit = false;
+            }
+
+            if ( this.DownCollision(stage) == true)
+            {
+                  this.position.y += -1;
+            }
+            
+      
+            if(this.put_Time > PUT_INTERVAL)
+            {
+                  if(this.downHit == true)
+                  {
+                        if(this.NextDownCollision(stage) == true)
+                        {
+                              this.downHit = false;
+                              
+                              this.put_Time = 0;
+                              this.isPutBlock = true;
+                        }
+                  }
+            }
+            
       }      
       // ################################ 落下 ################################ 
       Down()
@@ -775,6 +1098,11 @@ class Control
                         rect( (STAGE_OFFSET_WIDTH + 1) * BLOCK_SIZE,(STAGE_OFFSET_HEIGHT + this.clearLine[i]) * BLOCK_SIZE,(STAGE_WIDTH - 2 ) * BLOCK_SIZE,BLOCK_SIZE);
                   }
             }
+
+
+
+
+            this.Draw_LineString();
       }
 }
 
