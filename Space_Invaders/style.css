@@ -1,0 +1,24 @@
+
+html, body 
+{
+  height: 100%;
+}
+  
+body 
+{
+  background: #000000;  /*背景色 */
+  margin: 0;
+  display: flex;
+
+  /* This centers our sketch horizontally. */
+  justify-content: center;
+
+  /* This centers our sketch vertically. */
+  align-items: center;
+}
+
+@font-face
+{
+  font-family: 'PressStart2P';
+  src: url(../Asset/PressStart2P.ttf);
+}

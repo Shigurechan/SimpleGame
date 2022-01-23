@@ -125,7 +125,7 @@ class Stage
 class Control
 {
 
-    //　ぷよを設定
+    // ぷよを設定
     setPuyo()
     {
         
