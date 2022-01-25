@@ -19,6 +19,20 @@ const ENEMY_BULLET_SPEED = 4;                                     //バレット
 const ENEMY_BULLET_INTERVAL_TIME = 1000;                          //バレット発射間隔
 const ENEMY_BULLET_INTERVAL_RANDOM_TIME = 500;                    //乱数で間隔を調整
 const ENEMY_BULLET_ANIMATION_SPEED = 15;                         //アニメーション速度
+const ENEMY_BULLET_A = 0;
+const ENEMY_BULLET_B = 1;
+const ENEMY_BULLET_C = 2;
+const ENEMY_BULLET = 3;
+
+//当たり判定　種類
+const CollisionType = 
+{
+      Enemy: 0,
+      StageTopSide : 1,
+      PillBox : 2,
+      PlayerBullet : 3,
+      EnemyBullet : 4
+};
 
 //トーチカ
 const PILLBOX_NUM = 4;
@@ -28,6 +42,7 @@ const PILLBOX_SIZE = 16;
 const PILLBOX_SIZE_WIDTH = 16 * 8;
 const PILLBOX_SIZE_HEIGHT = 0;
 const PILLBOX_AREA_SIZE = ( (PILLBOX_NUM + 3) * PILLBOX_SIZE_WIDTH);
+const PILLBOX = 7;
 
 //プレイヤー
 const PLAYER_BULET_EXPLOSION_ANIMATION_SPEED = ONE_FRAME * 6;     //ヒットエフェクトの速度
@@ -40,6 +55,8 @@ const PLAYER_SIZE_HEIGHT = 24;
 const PLAYER_BULLET_SIZE_WIDTH = 3;
 const PLAYER_BULLET_SIZE_HEIGHT = 24;
 const PLAYER_BULLET_EXPLOSION_SIZE = 48;
+const PLAYER_BULLET = 5;
+const BULLET_ANIMATION_SPRITE_NUM = 4 - 1;
 
 
 /* 矩形同士の当たり判定 /*/
@@ -56,41 +73,179 @@ function BoxCollision(posA,sizeA,posB,sizeB)
       }
 }
 
+// ################################################################
+// # Bullet
+// ################################################################
+class Bullet
+{
+      // ################################ コンストラクタ ################################ 
+      constructor(bulletType,bts,bs,ps)
+      {
+
+            this.bullet_Sprite = bts;           //バレット           
+            this.explosion_Sprite = bs;         //バレット同士               
+            this.wallExplosion_Sprite = ps;     //トーチカヒット
+
+            this.position = new Vector(-1,-1);              //初期座標
+            this.type = bulletType;                         //バレットタイプ　エネミーまたは自機      
+
+            //アニメーション
+            this.animation_Time = 0;
+            this.ansimationExplosion_Time = 0;
+            this.animation_Clip = 0;
+
+            this.isActive = false;  //アクティブかどうか？
+
+            //当たり判定
+            this.isHit_Bullet = false;
+            this.isHit_Enemy = false;            
+            this.isHit_StageTopSide = false;
+            this.isHit_PillBox = false;
+
+
+      }
+
+      // ################################ 有効 ################################ 
+      setEnable(pos)
+      {
+            this.isActive = true;
+            this.position = new Vector(pos.x,pos.y);
+            
+      }
+
+      // ################################ 無効 ################################ 
+      setDisable()
+      {
+            this.isActive = false;
+            this.position = new Vector(-1,-1);
+            
+      }
+      
+      // ################################ Update ################################ 
+      Update()
+      {     
+            //移動
+            if(this.type == CollisionType.Enemy)
+            {
+                  this.position.y += ENEMY_BULLET_SPEED;
+            }
+            else if(this.type == CollisionType.PlayerBullet)
+            {
+                  this.position.y += -PLAYER_BULLET_SPEED;
+            }
+
+            //アニメーション
+            this.animation_Time += deltaTime;
+            if( (this.animation_Time > PLAYER_BULLET_ANIMATION_SPEED))
+            {
+                  this.animation_Time  = 0;
+                  this.animation_Clip++;
+
+                  if(this.animation_Clip > BULLET_ANIMATION_SPRITE_NUM)
+                  {
+                        this.animation_Clip = 0;
+                  }
+            }
+
+            //トーチカとヒットアニメーション
+            if(this.isHit_PillBox == true)
+            {
+                  this.animationExplosion_Time += deltaTime;
+                  if( (this.animationExplosion_Time > PLAYER_BULLET_ANIMATION_SPEED))
+                  {
+                        this.animationExplosion_Time  = 0;
+                        this.isHit == false;
+                  }
+                  
+            }
+      }
+
+      
+      // ################################ 当たり判定 ################################ 
+      Collision(object,type)
+      {
+            if(BoxCollision(new Vector(this.position.x,this.position.y), new Vector(this.size.x,this.size.y),
+                  new Vector(object.position.x,object.positon.y),new Vector(object.size.x,object.size.y)) == true)
+            {
+                  if(type == CollisionType.EnemyBullet)
+                  {
+                        this.isHit_Bullet = true;
+                  }
+                  else if (type == CollisionType.Enemy)
+                  {
+                        this.isHit_Enemy = true;
+                  }
+                  else if (type == CollisionType.StageTopSide)
+                  {
+                        this.isHit_StageTopSide = true;
+                  }
+                  else if (type == CollisionType.PillBox)
+                  {
+                        this.isHit_PILLBOX = true;
+                  }
+            }
+      }
+
+
+
+      // ################################ Renderer ################################ 
+      Renderer()
+      {
+            //バレットアニメーション
+            if( (this.isHit_Bullet == false) && (this.isHit_Enemy == false) && (this.isHit_StageTopSide == false) && (this.isHit_PillBox == false) )
+            {
+                  image(this.bullet_Sprite[this.animation_Clip],this.position.x,this.position.y);
+            }
+            else if( (this.isHit_Bullet == true) && (this.isHit == true) )
+            {
+                  //バレット　ヒット
+                  if(this.explosionEnemy_sprite != 0)
+                  {
+                       image(this.explosionPillBox_sprite,this.position.x,this.position.y);
+                  }
+            }
+            else if( (this.isHit_PillBox == true) && (this.isHit == true) )
+            {
+                  //トーチカ　ヒット
+                  image(this.explosionPillBox_sprite,this.position.x,this.position.y);
+            }            
+      }
+}
+
 
 // ################################################################
 // # Enemy
 // ################################################################
 class Enemy
 {
-      constructor(en,pos,sp1,sp2,ex,bullet)
+      // ################################ コンストラクタ ################################ 
+      constructor(pos,sp1,sp2,ex,bullet,be,m)
       {
-            //スプライト
-            this.sprite1 = sp1;
-            this.sprite2 = sp2;
-            this.explosion_sprite = ex;
-            this.spriteNum = en;    //スプライト番号
-            this.bullet_sprite = bullet;
+            this.sprite = [];
+            this.sprite.push(sp1);                   //エネミー
+            this.sprite.push(sp2);                   //エネミー
+            this.explosion_Sprite = ex;              //破壊
+
+
+            this.bullet_Sprite = bullet;              //バレット　
+            this.bulletExplosion_Sprite = be;         //バレット　破壊
+            this.bulletMatualExplosion_Sprite = m;    //バレット  同士
 
             //破壊 アニメーション
-            this.Explosion_Animation = 0;
-            this.isExplosion_Animation = false;
+            this.explosionAnimation_Time = 0;
+            this.isExplosionAnimation = false;
 
-            //バレット　アニメーション
-            this.bulletAnimation_Clip = 0;
-            this.bulletAnimation_Time = 0;
-
-            this.bulletInterval_Time = 0;
-
+            //バレット
             this.randomInterval  = Math.floor(random(-ENEMY_BULLET_INTERVAL_RANDOM_TIME,ENEMY_BULLET_INTERVAL_RANDOM_TIME));
-            this.randomBullet = Math.floor(random(0,100));
+            this.randomBullet = Math.floor(random(0,10));
+
+            this.bulletArray = [];
 
 
-            this.isBullet = false;              //バレットするかどうか？
-            this.isBulletPosition = false;      //バレットする座標にいるかどうか？最前列かどうか？
+
             this.change = false;                //スプライト切り替え
             this.moveReverse = false;           //移動方向
             this.isAlive = true;                //生きてるかどうか？          
-
 
             this.initPosition = new Vector(pos.x,pos.y);
             this.position = new Vector(pos.x,pos.y);
@@ -126,116 +281,158 @@ class Enemy
       // ################################ アニメーション ################################ 
       Animation()
       {
-            //バレットアニメーション
-            if ( (this.isAlive == true) && (this.isBullet == true) )
-            {
-                  this.bulletAnimation_Time += deltaTime;
-                  if(this.bulletAnimation_Time > ENEMY_BULLET_ANIMATION_SPEED)
-                  {
-                        this.bulletAnimation_Time = 0;
 
-                        this.bulletAnimation_Clip++;
-
-                        if(this.bulletAnimation_Clip > 3)
-                        {
-                              this.bulletAnimation_Clip = 0;
-                        }
-                  }
-            }
-
-
-
-            
             //破壊
-            if( (this.isAlive == false) && (this.isExplosion_Animation == true) )
+            if( (this.isAlive == false) && (this.isExplosionAnimation == true) )
             {
-                  this.Explosion_Animation += deltaTime;
-                  if(this.Explosion_Animation > ENEMY_EXPLOSION_ANIMATION_SPEED)
+                  this.explosionAnimation_Time += deltaTime;
+                  if(this.explosionAnimation_Time > ENEMY_EXPLOSION_ANIMATION_SPEED)
                   {
-                        this.isExplosion_Animation = false;
-                        this.Explosion_Animation = 0;
+                        this.isExplosionAnimation = false;
+                        this.explosionAnimation_Time = 0;
                   }
             }
       }
 
+      // ################################ Collision ################################ 
+      Collision(bullet)
+      {
+            if(BoxCollision(new Vector(bullet.position.x,bullet.position.y),new Vector(bullet.size.x,bullet.size.y),
+            new Vector(this.position.x,this.position.y),new Vector(this.size.x,this.size.y)) == true)
+            {
+                  this.isAlive = false;
+                  this.isExplosionAnimation = true;
+            }
+      }
+
+      
+      // ################################ バレット ################################ 
+      Bullet()
+      {
+            /*
+            # NOTE
+
+            有効なバレットがない場合は生成する
+
+            */
+
+            this.randomBullet = Math.floor(random(0,1000));
+            if(this.randomBullet == 0)
+            {
+                  let flag = false;
+                  this.bulletArray.forEach(item =>
+                  {
+                        if(item.isActive == false)
+                        {
+                              flag = true;
+                              item.setEnable(new Vector(this.position.x,this.position.y));
+                        }                  
+                  });
+
+                  if(flag == false)
+                  {
+                        this.bulletArray.push(new Bullet(CollisionType.Enemy,this.bullet_Sprite,this.bulletExplosion_Sprite,this.bulletMatualExplosion_Sprite));
+                        this.bulletArray[this.bulletArray.length - 1].position = new Vector(this.position.x + (ENEMY_SIZE_WIDTH / 2) ,this.position.y); //座標を設定
+                  }
+                  
+            }
+      }
 
 
       // ################################ Update ################################ 
       Update()
       {
             this.Animation();
+            this.Bullet();
 
-            if( (this.isBullet == false) && (this.isBulletPosition == true) )
+            this.bulletArray.forEach(item =>
             {
-                  this.bulletInterval_Time += deltaTime;
-                  if( this.bulletInterval_Time > (ENEMY_BULLET_INTERVAL_TIME + this.randomInterval)  )
-                  {
-                        
-                        this.bulletInterval_Time = 0;
-                        if(this.randomBullet % 3 == 0)
-                        {
-                              this.randomInterval  = Math.floor(random(-ENEMY_BULLET_INTERVAL_RANDOM_TIME,ENEMY_BULLET_INTERVAL_RANDOM_TIME));
-
-                              this.isBullet = true;
-                              this.bulletPosition = new Vector(this.position.x + (ENEMY_SIZE_WIDTH / 2 ),this.position.y + ENEMY_SIZE_HEIGHT);
-                        }
-
-                        this.randomBullet  = Math.floor(random(0,100));
-
-                  }
-            }
-
-
-            if(this.isBullet == true)
-            {
-                  this.bulletPosition.y += ENEMY_BULLET_SPEED;
-                  if(this.bulletPosition.y > SCREEN_SIZE_HEIGHT - 100)
-                  {
-                        this.bulletPosition = new Vector(-1,-1);
-                        this.isBullet = false;
-                  }
-            }            
+                  item.Update();
+            });
+      
       }
 
       // ################################ レンダリング ################################ 
       Renderer()
       {
+            this.bulletArray.forEach(item =>
+            {
+                  item.Renderer();
+            });
+
             if(this.isAlive == true)
             {
-                  //バレット
-                  if(this.isBullet == true)
-                  {                       
-                        image(this.bullet_sprite[this.bulletAnimation_Clip],this.bulletPosition.x,this.bulletPosition.y);
-                  }
-
                   //スプライト切り替え
                   if(this.change == false)
                   {
-                        image(this.sprite1,this.position.x,this.position.y);
+                        image(this.sprite[0],this.position.x,this.position.y);
                   }
                   else
                   {
-                        image(this.sprite2,this.position.x,this.position.y);
+                        image(this.sprite[1],this.position.x,this.position.y);
                   }                  
             }
-            else if((this.isAlive == false) && (this.isExplosion_Animation == true) )     //破壊
+            else if((this.isAlive == false) && (this.isExplosionAnimation == true) )     //破壊
             {
-                  image(this.explosion_sprite,this.position.x,this.position.y);
+                  image(this.explosion_Sprite,this.position.x,this.position.y);
             }
       }
 }
 
 
 // ################################################################
-// # PillBox_Chip
+// # PillBox
 // ################################################################
-class PillBox_Chip
+class PillBox
 {
       // ################################ コンストラクタ ################################ 
-      constructor(sp,pos)
+      constructor(pos,sp)
       {
+
+            //トーチカの形
+            this.boxArray = 
+            [
+                  [1,2,0,0,0,0,3,1],
+                  [2,0,0,0,0,0,0,3],
+                  [0,0,0,0,0,0,0,0],
+                  [0,0,0,0,0,0,0,0],
+                  [0,0,0,1,1,0,0,0],
+                  [0,0,1,1,1,1,0,0]
+                  
+            ];
+            
+
+            //ボックスの状態
+            this.state = [];    
+            for(let y = 0; y < this.boxArray.length; y++)
+            {
+                  for(let x = 0; x < this.boxArray[y].length; x++)      
+                  {
+                        this.state.push(new Vector(0,0));
+                  }
+            }
+
+            
+
+
+
             this.sprite = sp;
             this.position = new Vector(pos.x,pos.y);
+      }
+
+      // ################################ スプライト切り替え ################################ 
+      ChangeState(type,pos)
+      {
+            if(type == ENEMY_BULLET)
+            {
+                  if( this.boxState[pos.y][pos.y].x != 0)
+                  {
+                        this.boxState[pos.y][pos.y].x += 1;
+                        return true;
+                  }
+            }
+
+            return false;
       }
 
       // ################################ Update ################################ 
@@ -245,9 +442,25 @@ class PillBox_Chip
       }
 
       // ################################ 当たり判定 ################################ 
-      Collision(bullet)
+      Collision(type,object)
       {
-
+            for(let y = 0; y < this.boxArray.length; y++)
+            {
+                  for(let x = 0; x < this.boxArray[y].length; x++)
+                  {
+                        /*
+                        if(BoxCollision(new Vector(this.position.x + x * PILLBOX_CHIP_SIZE,this.position.x + y * PILLBOX_CHIP_SIZE),new Vector(PILLBOX_CHIP_SIZE,PILLBOX_CHIP_SIZE),
+                              new Vector(object.bulletPosition.x,object.bulletPosition.y),new Vector(object.bulletSize.x,object.bulletSize.y)) == true)
+                        {
+                              if( ChangeState(type,new Vector(x,y)) == true)
+                              {
+                                    object.isBullet = false;
+                              }
+                              
+                        }
+                        */
+                  }
+            }
       }
       
 
@@ -255,68 +468,69 @@ class PillBox_Chip
       // ################################ Renderer ################################ 
       Renderer()
       {
+            for(let y = 0; y < this.boxArray.length; y++)
+            {
+                  for(let x = 0; x < this.boxArray[y].length; x++)
+                  {
+                        if(this.boxArray[y][x] == 0)
+                        {
+                              image(this.sprite[0][0][0],this.position.x + x * 16,this.position.y + y * 16);
+                        }
+
+                        else if(this.boxArray[y][x] == 2)
+                        {
+                              image(this.sprite[1][0][0],this.position.x + x * 16,this.position.y + y * 16);
+                        }
+
+                        
+                        else if(this.boxArray[y][x] == 3)
+                        {
+                              image(this.sprite[2][0][0],this.position.x + x * 16,this.position.y + y * 16);
+                        }
+
+                  }
+            }
 
       }
 
 }
 
 // ################################################################
-// # PillBox
+// # PillBox_Mng
 // ################################################################
-class PillBox
+class PillBox_Mng
 {
       // ################################ コンストラクタ ################################ 
       constructor()
       {
 
-            //トーチカの形
-            this.boxArray = 
-            [
-                  [1,0,0,0,0,0,0,1],
-                  [1,2,0,0,0,0,3,1],
-                  [0,0,0,0,0,0,0,0],
-                  [0,0,0,0,0,0,0,0],
-                  [0,0,1,1,1,1,0,0],
-                  [0,0,1,1,1,1,0,0]
-                  
-            ];
 
-
-
-            
-            //トーチカ
+            //スプライト
             this.sprite = 
             [
                   [
-                        loadImage('Asset/pillbox_internal.png'),
-                        loadImage('Asset/pillbox_internal_damage_1.png'),
-                        loadImage('Asset/pillbox_internal_damage_2.png'),
-                        loadImage('Asset/pillbox_internal_damage_3.png'),
-                        loadImage('Asset/pillbox_internal_damage_4.png')
+                        [ loadImage("Asset/pillbox_rect_0_0.png"),loadImage("Asset/pillbox_rect_1_0.png"),loadImage("Asset/pillbox_rect_2_0.png"),loadImage("Asset/pillbox_rect_3_0.png"),loadImage("Asset/pillbox_rect_4_0.png"),0] ,
+                        [ loadImage("Asset/pillbox_rect_0_1.png"),loadImage("Asset/pillbox_rect_1_1.png"),loadImage("Asset/pillbox_rect_2_1.png"),loadImage("Asset/pillbox_rect_3_1.png"),0 ],
+                        [ loadImage("Asset/pillbox_rect_0_2.png"),loadImage("Asset/pillbox_rect_1_2.png"),loadImage("Asset/pillbox_rect_2_2.png"),0 ],
+                        [ loadImage("Asset/pillbox_rect_0_3.png"),loadImage("Asset/pillbox_rect_1_3.png"),0 ],
+                        [ loadImage("Asset/pillbox_rect_0_4.png"),loadImage("Asset/pillbox_rect_1_0.png"),loadImage("Asset/pillbox_rect_2_0.png"),loadImage("Asset/pillbox_rect_3_0.png"),loadImage("Asset/pillbox_rect_4_0.png"),0] ,
+                        [0],
                   ],
-
-                  [
-                        loadImage('Asset/pillbox_left.png'),
-                        loadImage('Asset/pillbox_left_damage_1.png'),
-                        loadImage('Asset/pillbox_left_damage_2.png'),
-                  ],
-
                   
                   [
-                        loadImage('Asset/pillbox_right.png'),
-                        loadImage('Asset/pillbox_right_damage_1.png'),
-                        loadImage('Asset/pillbox_right_damage_2.png'),
+                        [ loadImage("Asset/pillbox_left_0_0.png"),loadImage("Asset/pillbox_left_1_0.png"),loadImage("Asset/pillbox_left_2_0.png"),0],
+                        [ loadImage("Asset/pillbox_left_0_1.png"),loadImage("Asset/pillbox_left_1_1.png"),0 ],
+                        [ loadImage("Asset/pillbox_left_0_2.png"),loadImage("Asset/pillbox_left_1_0.png"),loadImage("Asset/pillbox_left_2_0.png"),0],
+                        [0],
                   ],
 
                   [
-                        loadImage('Asset/pillbox_internal.png'),
-                        loadImage('Asset/pillbox_bottom_damage_1.png'),
-                        loadImage('Asset/pillbox_bottom_damage_2.png'),
-                        loadImage('Asset/pillbox_bottom_damage_3.png'),
-                        loadImage('Asset/pillbox_bottom_damage_4.png')
-                  ],
-
-
+                        [ loadImage("Asset/pillbox_right_0_0.png"),loadImage("Asset/pillbox_right_1_0.png"),loadImage("Asset/pillbox_right_2_0.png"),0],
+                        [ loadImage("Asset/pillbox_right_0_1.png"),loadImage("Asset/pillbox_right_1_1.png"),0 ],
+                        [ loadImage("Asset/pillbox_right_0_2.png"),loadImage("Asset/pillbox_right_1_0.png"),loadImage("Asset/pillbox_right_2_0.png"),0],
+                        [0],
+                  ]
+                  
             ]
 
             this.chip = [ ];
@@ -329,25 +543,7 @@ class PillBox
       setRest()
       {
             this.chip.length = 0;
-            for(let y = 0; y < PILLBOX_BLOCK_HEIGHT_NUM; y++)
-            {                  
-                  for(let x = 0; x < PILLBOX_BLOCK_WIDTH_NUM; x++)
-                  {
-                        if(this.boxArray[y][x] == 0)
-                        {
-                              this.chip.push(new PillBox_Chip(new Vector(x * 16 ,y * 16),this.sprite[0]));
-                        }
-                        else if(this.boxArray[y][x] == 2)
-                        {
-                              this.chip.push(new PillBox_Chip(new Vector(x * 16 ,y * 16),this.sprite[1]));
-                        }
-                        else if(this.boxArray[y][x] == 3)
-                        {
-                              this.chip.push(new PillBox_Chip(new Vector(x * 16 ,y * 16),this.sprite[2]));
-                        }
-
-                  }
-            }
+            this.chip.push(new PillBox(new Vector(100,100),this.sprite));
       }
       
 
@@ -385,10 +581,7 @@ class PillBox
       // ################################ Renderer ################################ 
       Renderer()
       {
-            this.pillBoxChip.forEach(item =>
-            {
-                  item.Renderer();
-            });
+            this.chip.forEach(item =>{ item.Renderer() });
       }
 }
 
@@ -397,16 +590,16 @@ class PillBox
 // ################################################################
 // # stage
 // ################################################################
-class Stage
+class Enemy_Mng
 {
       // ################################ コンストラクタ ################################ 
       constructor()
       {
 
-
+      
 
       //エネミー破壊エフェクト
-      this.enemy_explosion_sprite = 
+      this.explosion_Sprite = 
       [      
             loadImage('Asset/explosion_red.png'),
             loadImage('Asset/explosion_yellow.png'),
@@ -416,11 +609,13 @@ class Stage
       ];
 
     
-
+      this.bullet_Explosion_Sprite = loadImage("Asset/explosion_white.png");
+      this.wall_Explosion_Sprite = loadImage("Asset/wall_explosion.png");
 
       //エネミーバレット
-      this.enemy_bullet_sprite = 
+      this.bullet_Sprite = 
       [
+      
             [
                   loadImage('Asset/enemy_bullet_a_1.png'),
                   loadImage('Asset/enemy_bullet_a_2.png'),
@@ -445,7 +640,7 @@ class Stage
       ];
 
       //エネミー
-      this.enemy_sprite = 
+      this.sprite = 
       [
             [
                   loadImage('Asset/enemy_a_red.png'),
@@ -515,7 +710,6 @@ class Stage
 
 
             //トーチカ　関係
-            this.pillBox = new PillBox();
 
 
             // エネミー 関係
@@ -627,37 +821,37 @@ class Stage
                         {
                               case 0:
                               {
-                                    this.enemyArray[y][x] = new Enemy(0,new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
-                                    this.enemy_sprite[0][rand],this.enemy_sprite[1][rand],this.enemy_explosion_sprite[rand],this.enemy_bullet_sprite[0]);
+                                    this.enemyArray[y][x] = new Enemy(new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
+                                    this.sprite[0][rand],this.sprite[1][rand],this.explosion_Sprite[rand],this.bullet_Sprite[0],this.bullet_Explosion_Sprite,this.wall_Explosion_Sprite);
                               }
                               break;
 
                               case 1:
                               {
-                                    this.enemyArray[y][x] = new Enemy(1,new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
-                                    this.enemy_sprite[2][rand],this.enemy_sprite[3][rand],this.enemy_explosion_sprite[rand],this.enemy_bullet_sprite[1]);
+                                    this.enemyArray[y][x] = new Enemy(new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
+                                    this.sprite[2][rand],this.sprite[3][rand],this.explosion_Sprite[rand],this.bullet_Sprite[0],this.bullet_Explosion_Sprite,this.wall_Explosion_Sprite);
                               }
                               break;
 
                               case 2:
                               {
-                                    this.enemyArray[y][x] = new Enemy(2,new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
-                                    this.enemy_sprite[2][rand],this.enemy_sprite[3][rand],this.enemy_explosion_sprite[rand],this.enemy_bullet_sprite[1]);
+                                    this.enemyArray[y][x] = new Enemy(new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
+                                    this.sprite[2][rand],this.sprite[3][rand],this.explosion_Sprite[rand],this.bullet_Sprite[1],this.bullet_Explosion_Sprite,this.wall_Explosion_Sprite);
                               }
                               break;                                                                                                                                                      
                               
                               case 3:
                               {
-                                    this.enemyArray[y][x] = new Enemy(2,new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
-                                    this.enemy_sprite[4][rand],this.enemy_sprite[5][rand],this.enemy_explosion_sprite[rand],this.enemy_bullet_sprite[2]);
+                                    this.enemyArray[y][x] = new Enemy(new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
+                                    this.sprite[4][rand],this.sprite[5][rand],this.explosion_Sprite[rand],this.bullet_Sprite[2],this.bullet_Explosion_Sprite,this.wall_Explosion_Sprite);
                               }
                               break;
                               
                               
                               case 4:
                               {
-                                    this.enemyArray[y][x] = new Enemy(2,new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
-                                    this.enemy_sprite[4][rand],this.enemy_sprite[5][rand],this.enemy_explosion_sprite[rand],this.enemy_bullet_sprite[2]);
+                                    this.enemyArray[y][x] = new Enemy(new Vector(this.position.x + (x * ENEMY_SIZE_WIDTH) + interval.x ,this.position.y + (y * ENEMY_SIZE_HEIGHT) + interval.y),
+                                    this.sprite[4][rand],this.sprite[5][rand],this.explosion_Sprite[rand],this.bullet_Sprite[0],this.bullet_Explosion_Sprite,this.wall_Explosion_Sprite);
                               }
                               break;
                         }
@@ -802,6 +996,8 @@ class Stage
       Renderer()
       {
             
+            //image(this.bullet_Sprite[0][0]);
+
             this.enemyArray.forEach(item =>
             {
                   item.forEach(item2 =>
@@ -810,13 +1006,6 @@ class Stage
                   });
                         
             });
-
-
-            this.pillBox.forEach(item =>
-            {
-                  item.Renderer();
-            });
-
 
       }
 }
@@ -848,7 +1037,7 @@ class Player
             //バレット
             this.bulletPosition = new Vector(-1,-1);
             this.hitPosition = new Vector(-1,-1);
-
+            this.bulletSize = new Vector(PLAYER_BULLET_SIZE_WIDTH,PLAYER_BULLET_SIZE_HEIGHT);
             this.isPushBullet = false;
             this.isBullet = false;
             this.isHitAnimation = true;
@@ -991,26 +1180,29 @@ class Game
       // ################################ コンストラクタ ################################ 
       constructor()
       {
-            this.stage = new Stage();
+            this.pillBox_Mng = new PillBox_Mng();
+            this.enemy_Mng = new Enemy_Mng();
             this.player = new Player();
       }
 
       // ################################ Update ################################ 
       Update()
       {
-            this.stage.Update();
+            this.enemy_Mng.Update();
             this.player.Update();
+            this.pillBox_Mng.Update();
 
-            this.stage.Collision(this.player);
-            this.player.CheckHit(this.stage);
+            this.enemy_Mng.Collision(this.player);
 
       }
 
       // ############################### Renderer ################################ 
       Renderer()
       {
-            this.stage.Renderer();
+            this.enemy_Mng.Renderer();
             this.player.Renderer();
+            this.pillBox_Mng.Renderer();
+
 
       }
 }
