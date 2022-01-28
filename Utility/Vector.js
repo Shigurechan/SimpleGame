@@ -22,6 +22,7 @@ function Range(a,b)
 
 
 
+
 //ベクター
 class Vector
 {

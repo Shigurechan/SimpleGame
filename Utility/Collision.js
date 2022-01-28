@@ -88,7 +88,21 @@ class Collision
                   return false;
             }
       }
-
-
-
 }
+
+
+
+/* 矩形同士の当たり判定 /*/
+function BoxCollision(posA,sizeA,posB,sizeB)
+{       
+      if( ((posA.x + sizeA.x) > posB.x) && ((posB.x + sizeB.x) > posA.x )
+      &&    ((posA.y + sizeA.y) > posB.y) && ((posB.y + sizeB.y) > posA.y ) )
+      {
+            return true;
+      }
+      else
+      {
+            return false;
+      }
+}
+
